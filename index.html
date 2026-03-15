@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>مملكة التداول — رصد KSA</title>
-<script src="https://cdn.jsdelivr.net/npm/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
@@ -153,7 +152,7 @@ const YF_MAP = {
 };
 
 let allData = [], selectedTicker = null, currentView = 'overview';
-let chart = null, candleSeries = null, currentTF = '5m';
+let currentTF = '5m';
 
 // ── جلب Sheets ──
 async function fetchSheets() {
@@ -275,26 +274,11 @@ function renderSidebar(ticker) {
 }
 
 // ── Chart ──
-function initChart() {
-  const container = document.getElementById('chart-container');
-  if (chart) { chart.remove(); chart = null; candleSeries = null; }
-  chart = LightweightCharts.createChart(container, {
-    layout: { background: { color: '#0a0a0a' }, textColor: '#555' },
-    grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-    rightPriceScale: { borderColor: '#1a1a1a' },
-    timeScale: { borderColor: '#1a1a1a', timeVisible: true, secondsVisible: false },
-    width: container.clientWidth,
-    height: container.clientHeight,
-  });
-  candleSeries = chart.addCandlestickSeries({
-    upColor: '#00CC44', downColor: '#FF4444',
-    borderUpColor: '#00CC44', borderDownColor: '#FF4444',
-    wickUpColor: '#00CC44', wickDownColor: '#FF4444',
-  });
-  window.addEventListener('resize', () => {
-    if (chart) chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
-  });
+function setTF(el, tf) {
+  document.querySelectorAll('.tf').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  currentTF = tf;
+  if (selectedTicker) updateChart(selectedTicker);
 }
 
 async function updateChart(ticker) {
@@ -302,8 +286,59 @@ async function updateChart(ticker) {
   if (!d) return;
   document.getElementById('chart-name').textContent = ticker;
   document.getElementById('chart-price').textContent = d.spot.toLocaleString();
+  document.getElementById('chart-chg').innerHTML = '';
   renderSidebar(ticker);
-  if (!chart) initChart();
+
+  // TradingView ticker map
+  const tvMap = {
+    SPX:'SP:SPX', SPY:'AMEX:SPY', QQQ:'NASDAQ:QQQ', IWM:'AMEX:IWM',
+    GLD:'AMEX:GLD', TLT:'NASDAQ:TLT', AAPL:'NASDAQ:AAPL', MSFT:'NASDAQ:MSFT',
+    NVDA:'NASDAQ:NVDA', AMZN:'NASDAQ:AMZN', GOOGL:'NASDAQ:GOOGL',
+    META:'NASDAQ:META', TSLA:'NASDAQ:TSLA', NFLX:'NASDAQ:NFLX',
+    AMD:'NASDAQ:AMD', AVGO:'NASDAQ:AVGO', JPM:'NYSE:JPM', BAC:'NYSE:BAC',
+    GS:'NYSE:GS', V:'NYSE:V', MA:'NYSE:MA', UNH:'NYSE:UNH',
+    LLY:'NYSE:LLY', XOM:'NYSE:XOM'
+  };
+
+  const tvTicker = tvMap[ticker] || ticker;
+  const tfMap = {'5m':'5','15m':'15','1h':'60','1d':'D'};
+  const interval = tfMap[currentTF] || 'D';
+
+  const container = document.getElementById('chart-container');
+  container.innerHTML = '';
+
+  // TradingView Advanced Chart Widget
+  const script = document.createElement('script');
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  script.async = true;
+  script.innerHTML = JSON.stringify({
+    autosize: true,
+    symbol: tvTicker,
+    interval: interval,
+    timezone: 'America/New_York',
+    theme: 'dark',
+    style: '1',
+    locale: 'ar',
+    backgroundColor: '#0a0a0a',
+    gridColor: '#111111',
+    hide_top_toolbar: false,
+    hide_legend: false,
+    save_image: false,
+    calendar: false,
+    support_host: 'https://www.tradingview.com'
+  });
+
+  const widgetDiv = document.createElement('div');
+  widgetDiv.className = 'tradingview-widget-container__widget';
+  widgetDiv.style.cssText = 'height:100%;width:100%';
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'tradingview-widget-container';
+  wrapper.style.cssText = 'height:100%;width:100%';
+  wrapper.appendChild(widgetDiv);
+  wrapper.appendChild(script);
+  container.appendChild(wrapper);
+}
 
   const yfTicker = YF_MAP[ticker] || ticker;
   const tfMap    = {'5m':'5m','15m':'15m','1h':'1h','1d':'1d'};
@@ -370,21 +405,6 @@ async function updateChart(ticker) {
   candleSeries.setData(candles);
   drawLevels(d);
   chart.timeScale().fitContent();
-}
-
-function drawLevels(d) {
-  if (!candleSeries) return;
-  const gexs = [d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(g=>g>0);
-  const lines = [
-    { price: d.callWall,  color: '#FF4444', width: 2, style: 0, title: `CW ${d.callWall}` },
-    { price: d.putWall,   color: '#00CC44', width: 2, style: 0, title: `PW ${d.putWall}` },
-    { price: d.zeroGamma, color: '#666666', width: 1, style: 1, title: `ZG ${d.zeroGamma}` },
-    { price: d.topGamma,  color: '#4da6ff', width: 1, style: 0, title: `HVL ${d.topGamma}` },
-  ];
-  gexs.forEach(g => lines.push({ price: g, color: '#FFA500', width: 1, style: 2, title: String(g) }));
-  lines.forEach(l => {
-    candleSeries.createPriceLine({ price: l.price, color: l.color, lineWidth: l.width, lineStyle: l.style, axisLabelVisible: true, title: l.title });
-  });
 }
 
 function setTF(el, tf) {
