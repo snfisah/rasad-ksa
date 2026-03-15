@@ -289,7 +289,6 @@ async function updateChart(ticker) {
   document.getElementById('chart-chg').innerHTML = '';
   renderSidebar(ticker);
 
-  // TradingView ticker map
   const tvMap = {
     SPX:'SP:SPX', SPY:'AMEX:SPY', QQQ:'NASDAQ:QQQ', IWM:'AMEX:IWM',
     GLD:'AMEX:GLD', TLT:'NASDAQ:TLT', AAPL:'NASDAQ:AAPL', MSFT:'NASDAQ:MSFT',
@@ -300,44 +299,18 @@ async function updateChart(ticker) {
     LLY:'NYSE:LLY', XOM:'NYSE:XOM'
   };
 
-  const tvTicker = tvMap[ticker] || ticker;
-  const tfMap = {'5m':'5','15m':'15','1h':'60','1d':'D'};
+  const tvTicker = encodeURIComponent(tvMap[ticker] || ticker);
+  const tfMap    = {'5m':'5','15m':'15','1h':'60','1d':'D'};
   const interval = tfMap[currentTF] || 'D';
-
   const container = document.getElementById('chart-container');
-  container.innerHTML = '';
 
-  // TradingView Advanced Chart Widget
-  const script = document.createElement('script');
-  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-  script.async = true;
-  script.innerHTML = JSON.stringify({
-    autosize: true,
-    symbol: tvTicker,
-    interval: interval,
-    timezone: 'America/New_York',
-    theme: 'dark',
-    style: '1',
-    locale: 'ar',
-    backgroundColor: '#0a0a0a',
-    gridColor: '#111111',
-    hide_top_toolbar: false,
-    hide_legend: false,
-    save_image: false,
-    calendar: false,
-    support_host: 'https://www.tradingview.com'
-  });
-
-  const widgetDiv = document.createElement('div');
-  widgetDiv.className = 'tradingview-widget-container__widget';
-  widgetDiv.style.cssText = 'height:100%;width:100%';
-
-  const wrapper = document.createElement('div');
-  wrapper.className = 'tradingview-widget-container';
-  wrapper.style.cssText = 'height:100%;width:100%';
-  wrapper.appendChild(widgetDiv);
-  wrapper.appendChild(script);
-  container.appendChild(wrapper);
+  container.innerHTML = `<iframe
+    src="https://www.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${tvTicker}&interval=${interval}&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=1&saveimage=0&toolbarbg=0a0a0a&studies=[]&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&locale=ar"
+    style="width:100%;height:100%;border:none"
+    allowtransparency="true"
+    scrolling="no"
+    allowfullscreen>
+  </iframe>`;
 }
 
   const yfTicker = YF_MAP[ticker] || ticker;
