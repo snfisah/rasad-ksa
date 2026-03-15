@@ -141,7 +141,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
 
 <script>
 const SHEET_ID  = '1kS31BVYSn_xEPCtsOOeebMZuOyDS3OpQaE1Sv8ZR1wU';
-const CSV_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+const CSV_URL   = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`)}`;
 
 // Yahoo Finance ticker map
 const YF_MAP = {
