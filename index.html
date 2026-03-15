@@ -2,120 +2,103 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>مملكة التداول — رصد KSA</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
-a{text-decoration:none;color:inherit}
+html,body{height:100%;overflow:hidden}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#fff;display:flex;flex-direction:column}
 
-/* ── Header ── */
-.header{background:#0d0d0d;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid #1a1a1a;position:sticky;top:0;z-index:100}
-.logo{font-size:16px;font-weight:600;color:#fff}.logo span{color:#FFA500}
-.header-right{display:flex;align-items:center;gap:10px}
-.badge{background:#111;border:0.5px solid #222;border-radius:6px;padding:4px 10px;font-size:11px;color:#555}
+.header{background:#0d0d0d;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid #1e1e1e;flex-shrink:0}
+.logo{font-size:18px;font-weight:700;color:#fff}.logo span{color:#FFA500}
+.badge{background:#111;border:0.5px solid #222;border-radius:6px;padding:5px 12px;font-size:12px;color:#666}
 .badge b{color:#00CC44}
-.dot-live{width:6px;height:6px;border-radius:50%;background:#00CC44;display:inline-block;margin-left:4px;animation:pulse 2s infinite}
+.dot{width:7px;height:7px;border-radius:50%;background:#00CC44;display:inline-block;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* ── Tabs ── */
-.tabs{display:flex;gap:4px;padding:10px 16px;background:#0d0d0d;border-bottom:0.5px solid #1a1a1a;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.tabs::-webkit-scrollbar{height:2px}
-.tabs::-webkit-scrollbar-thumb{background:#222}
-.tab{padding:5px 12px;border-radius:6px;font-size:12px;color:#555;border:0.5px solid transparent;cursor:pointer;white-space:nowrap;transition:all .15s}
-.tab:hover{color:#aaa}
-.tab.active{background:#1a1a1a;color:#fff;border-color:#2a2a2a}
+.tabs{display:flex;gap:4px;padding:8px 16px;background:#0d0d0d;border-bottom:0.5px solid #1e1e1e;overflow-x:auto;flex-shrink:0}
+.tabs::-webkit-scrollbar{height:2px}.tabs::-webkit-scrollbar-thumb{background:#222}
+.tab{padding:6px 14px;border-radius:7px;font-size:13px;color:#555;border:0.5px solid transparent;cursor:pointer;white-space:nowrap;transition:all .15s;font-weight:500}
+.tab:hover{color:#aaa}.tab.active{background:#1a1a1a;color:#fff;border-color:#2a2a2a}
 
-/* ── Main Layout ── */
-.main{display:grid;grid-template-columns:1fr 240px;min-height:calc(100vh - 130px)}
-@media(max-width:700px){.main{grid-template-columns:1fr}.sidebar{display:none}}
+.layout{display:flex;flex:1;overflow:hidden}
 
-/* ── Chart Area ── */
-.chart-area{padding:16px;border-right:0.5px solid #1a1a1a}
-.chart-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
-.ch-left{display:flex;flex-direction:column;gap:2px}
-.ticker-name{font-size:12px;color:#555}
-.price-row{display:flex;align-items:baseline;gap:8px}
-.price-big{font-size:24px;font-weight:600;color:#fff}
-.chg-pos{color:#00CC44;font-size:12px}
-.chg-neg{color:#FF4444;font-size:12px}
-.tf-pills{display:flex;gap:3px}
-.tf{font-size:10px;padding:3px 8px;border-radius:4px;color:#555;border:0.5px solid #222;cursor:pointer;transition:all .15s}
+/* ── Chart ── */
+.chart-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.chart-top{padding:12px 16px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:0.5px solid #1a1a1a;background:#0d0d0d}
+.ct-left{display:flex;flex-direction:column;gap:3px}
+.ticker-label{font-size:13px;color:#555;font-weight:500}
+.price-main{font-size:28px;font-weight:700;color:#fff;line-height:1}
+.price-chg{font-size:13px;margin-top:2px}
+.chg-up{color:#00CC44}.chg-dn{color:#FF4444}
+.tf-row{display:flex;gap:4px;align-items:center}
+.tf{font-size:12px;padding:4px 10px;border-radius:5px;color:#555;border:0.5px solid #222;cursor:pointer;transition:all .15s}
 .tf.active,.tf:hover{color:#fff;border-color:#444;background:#1a1a1a}
-.chart-wrap{position:relative;height:320px}
-.chart-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
-.leg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:#555}
-.leg-line{width:18px;height:1.5px;border-radius:1px}
-.leg-dash{width:18px;border-top:1.5px dashed}
-
-/* ── Overview Grid ── */
-.overview{padding:16px;border-right:0.5px solid #1a1a1a}
-.section-title{font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
-.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
-.card{background:#111;border:0.5px solid #1e1e1e;border-radius:10px;padding:10px 12px;cursor:pointer;transition:border-color .15s}
-.card:hover,.card.selected{border-color:#333}
-.card.selected{border-color:#4da6ff}
-.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
-.card-ticker{font-size:13px;font-weight:600;color:#fff}
-.card-price{font-size:11px;color:#555}
-.mini-levels{display:flex;flex-direction:column;gap:3px;margin:6px 0}
-.ml-row{display:flex;justify-content:space-between}
-.ml-label{font-size:10px;color:#444}
-.ml-val{font-size:10px;font-weight:500}
-.mini-bar{height:2px;background:#1a1a1a;border-radius:1px;position:relative;margin:4px 0}
-.mini-spot{position:absolute;top:-3px;width:3px;height:8px;background:#4da6ff;border-radius:1px}
-.card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
-.status-badge{font-size:9px;padding:2px 6px;border-radius:4px}
-.sb-bull{background:#0d1f0d;color:#00CC44;border:0.5px solid #1a3a1a}
-.sb-bear{background:#1f0d0d;color:#FF4444;border:0.5px solid #3a1a1a}
-.pc-ratio{font-size:10px;color:#444}
+#chart-container{flex:1;position:relative}
+.chart-legend{padding:8px 16px;display:flex;flex-wrap:wrap;gap:12px;border-top:0.5px solid #1a1a1a;background:#0d0d0d;flex-shrink:0}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:#555}
+.leg-line{width:20px;height:2px;border-radius:1px}
+.leg-dash{width:20px;border-top:2px dashed}
 
 /* ── Sidebar ── */
-.sidebar{padding:14px;background:#0d0d0d;overflow-y:auto}
-.level-item{display:flex;justify-content:space-between;align-items:center;padding:7px 9px;background:#111;border-radius:7px;margin-bottom:4px;border-left:2px solid transparent}
-.li-cw{border-left-color:#FF4444}.li-pw{border-left-color:#00CC44}
-.li-zg{border-left-color:#555}.li-hvl{border-left-color:#4da6ff}
-.li-label{font-size:11px;color:#555}
-.li-val{font-size:12px;font-weight:600}
-.lv-cw{color:#FF4444}.lv-pw{color:#00CC44}.lv-zg{color:#aaa}.lv-hvl{color:#4da6ff}
-.gex-pills{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}
-.gp{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500;cursor:default}
+.sidebar{width:260px;border-right:0.5px solid #1e1e1e;background:#0d0d0d;display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.sb-section{padding:14px 14px 8px;border-bottom:0.5px solid #141414}
+.sb-title{font-size:11px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:600}
+.lv-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#111;border-radius:8px;margin-bottom:4px;border-right:2px solid transparent}
+.lv-cw{border-right-color:#FF4444}.lv-pw{border-right-color:#00CC44}.lv-zg{border-right-color:#555}.lv-hvl{border-right-color:#4da6ff}
+.lv-label{font-size:12px;color:#666}
+.lv-val{font-size:14px;font-weight:600}
+.vc-cw{color:#FF4444}.vc-pw{color:#00CC44}.vc-zg{color:#aaa}.vc-hvl{color:#4da6ff}
+.gex-pills{display:flex;flex-wrap:wrap;gap:4px}
+.gp{font-size:11px;padding:3px 8px;border-radius:5px;font-weight:600}
 .g-red{background:#1a0d0d;color:#FF4444;border:0.5px solid #3a1a1a}
 .g-pur{background:#13111f;color:#9B59B6;border:0.5px solid #2a1f4a}
 .g-grn{background:#0d1a0d;color:#00CC44;border:0.5px solid #1a3a1a}
-.contract{background:#111;border-radius:7px;padding:7px 9px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;border-left:2px solid #FF4444}
-.contract.call{border-left-color:#00CC44}
-.ct-type{font-size:10px;font-weight:600;color:#FF4444}
+.contract{background:#111;border-radius:8px;padding:9px 11px;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;border-right:2px solid #FF4444}
+.contract.call{border-right-color:#00CC44}
+.ct-type{font-size:11px;font-weight:700;color:#FF4444}
 .contract.call .ct-type{color:#00CC44}
-.ct-strike{font-size:14px;font-weight:600;color:#fff}
-.ct-detail{font-size:10px;color:#444;text-align:left}
-.stats-box{background:#111;border-radius:7px;padding:8px 10px;margin-top:6px}
-.stat-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:0.5px solid #1a1a1a}
+.ct-strike{font-size:16px;font-weight:700;color:#fff}
+.ct-info{font-size:11px;color:#555;text-align:left}
+.stat-box{background:#111;border-radius:8px;overflow:hidden}
+.stat-row{display:flex;justify-content:space-between;padding:8px 11px;border-bottom:0.5px solid #1a1a1a}
 .stat-row:last-child{border-bottom:none}
-.stat-label{font-size:11px;color:#444}
-.stat-val{font-size:11px;font-weight:500}
+.sl{font-size:12px;color:#555}
+.sv{font-size:12px;font-weight:600}
 
-/* ── Loading ── */
-.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:400px;gap:12px;color:#333}
-.spinner{width:28px;height:28px;border:2px solid #1a1a1a;border-top-color:#FFA500;border-radius:50%;animation:spin .8s linear infinite}
+/* ── Overview ── */
+.overview-panel{flex:1;overflow-y:auto;padding:16px}
+.ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.ov-card{background:#111;border:0.5px solid #1e1e1e;border-radius:12px;padding:13px 14px;cursor:pointer;transition:border-color .15s}
+.ov-card:hover{border-color:#333}.ov-card.sel{border-color:#4da6ff}
+.ov-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.ov-ticker{font-size:15px;font-weight:700;color:#fff}
+.ov-price{font-size:12px;color:#555}
+.ov-levels{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+.ov-lrow{display:flex;justify-content:space-between}
+.ov-ll{font-size:11px;color:#444}
+.ov-lv{font-size:11px;font-weight:600}
+.ov-bar{height:3px;background:#1a1a1a;border-radius:2px;position:relative;margin:5px 0}
+.ov-spot{position:absolute;top:-3px;width:3px;height:9px;background:#4da6ff;border-radius:1px}
+.ov-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.ov-badge{font-size:10px;padding:3px 8px;border-radius:5px}
+.ob-bull{background:#0d1f0d;color:#00CC44;border:0.5px solid #1a3a1a}
+.ob-bear{background:#1f0d0d;color:#FF4444;border:0.5px solid #3a1a1a}
+.ov-pc{font-size:11px;color:#444}
+
+.loading{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;height:100%;color:#333;font-size:14px}
+.spinner{width:32px;height:32px;border:2px solid #1a1a1a;border-top-color:#FFA500;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* ── Error ── */
-.error-box{background:#1a0d0d;border:0.5px solid #3a1a1a;border-radius:8px;padding:14px;color:#FF4444;font-size:12px;margin:20px}
-
-/* ── Footer ── */
-.footer{background:#0a0a0a;border-top:0.5px solid #1a1a1a;padding:8px 20px;display:flex;justify-content:space-between;align-items:center}
-.ft{font-size:10px;color:#333}
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="logo">مملكة <span>التداول</span> — رصد KSA</div>
-  <div class="header-right">
+  <div style="display:flex;align-items:center;gap:10px">
     <div class="badge" id="update-badge">جاري التحميل...</div>
-    <span class="dot-live"></span>
+    <span class="dot"></span>
   </div>
 </div>
 
@@ -125,342 +108,288 @@ a{text-decoration:none;color:inherit}
 </div>
 
 <!-- Overview -->
-<div id="view-overview">
-  <div class="overview">
-    <div class="section-title" id="overview-title">جاري التحميل...</div>
-    <div class="cards-grid" id="cards-grid">
-      <div class="loading"><div class="spinner"></div><span>جاري سحب البيانات من Sheets...</span></div>
-    </div>
-  </div>
+<div id="view-overview" class="overview-panel">
+  <div class="loading"><div class="spinner"></div>جاري سحب البيانات...</div>
 </div>
 
-<!-- Chart View -->
-<div id="view-chart" style="display:none">
-  <div class="main">
-    <div class="chart-area">
-      <div class="chart-header">
-        <div class="ch-left">
-          <div class="ticker-name" id="chart-name">—</div>
-          <div class="price-row">
-            <span class="price-big" id="chart-price">—</span>
-          </div>
-        </div>
-        <div class="tf-pills">
-          <span class="tf active">يوم</span>
-        </div>
+<!-- Chart -->
+<div id="view-chart" class="layout" style="display:none">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="chart-panel">
+    <div class="chart-top">
+      <div class="ct-left">
+        <div class="ticker-label" id="chart-name">—</div>
+        <div class="price-main" id="chart-price">—</div>
+        <div class="price-chg" id="chart-chg"></div>
       </div>
-      <div class="chart-wrap">
-        <canvas id="mainChart"></canvas>
-      </div>
-      <div class="chart-legend">
-        <div class="leg-item"><div class="leg-line" style="background:#FF4444"></div>Call Wall</div>
-        <div class="leg-item"><div class="leg-line" style="background:#00CC44"></div>Put Wall</div>
-        <div class="leg-item"><div class="leg-dash" style="border-color:#aaa"></div>Zero Gamma</div>
-        <div class="leg-item"><div class="leg-line" style="background:#4da6ff"></div>HVL</div>
-        <div class="leg-item"><div class="leg-dash" style="border-color:#FFA500"></div>مستويات GEX</div>
+      <div class="tf-row">
+        <span class="tf active" onclick="setTF(this,'5m')">5د</span>
+        <span class="tf" onclick="setTF(this,'15m')">15د</span>
+        <span class="tf" onclick="setTF(this,'1h')">1س</span>
+        <span class="tf" onclick="setTF(this,'1d')">يوم</span>
       </div>
     </div>
-    <div class="sidebar" id="sidebar-content">
-      <div class="loading"><div class="spinner"></div></div>
+    <div id="chart-container"></div>
+    <div class="chart-legend">
+      <div class="leg"><div class="leg-line" style="background:#FF4444"></div>Call Wall</div>
+      <div class="leg"><div class="leg-line" style="background:#00CC44"></div>Put Wall</div>
+      <div class="leg"><div class="leg-dash" style="border-color:#888"></div>Zero Gamma</div>
+      <div class="leg"><div class="leg-line" style="background:#4da6ff"></div>HVL</div>
+      <div class="leg"><div class="leg-dash" style="border-color:#FFA500"></div>GEX Levels</div>
     </div>
   </div>
-</div>
-
-<div class="footer">
-  <span class="ft"><span class="dot-live" style="margin-left:0;margin-right:4px"></span>يتحدث كل 5 دقائق خلال ساعات السوق</span>
-  <span class="ft">مملكة التداول © 2026</span>
 </div>
 
 <script>
 const SHEET_ID = '1kS31BVYSn_xEPCtsOOeebMZuOyDS3OpQaE1Sv8ZR1wU';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`;
 
-let allData = [];
-let selectedTicker = null;
-let chartInstance = null;
-let currentView = 'overview';
+// Yahoo Finance ticker map
+const YF_MAP = {
+  SPX:'%5EGSPC', SPY:'SPY', QQQ:'QQQ', IWM:'IWM', GLD:'GLD', TLT:'TLT',
+  AAPL:'AAPL', MSFT:'MSFT', NVDA:'NVDA', AMZN:'AMZN', GOOGL:'GOOGL',
+  META:'META', TSLA:'TSLA', NFLX:'NFLX', AMD:'AMD', AVGO:'AVGO',
+  JPM:'JPM', BAC:'BAC', GS:'GS', V:'V', MA:'MA', UNH:'UNH', LLY:'LLY', XOM:'XOM'
+};
 
-// ── جلب البيانات من Sheets ──
-async function fetchData() {
-  try {
-    const res = await fetch(SHEET_URL);
-    const text = await res.text();
-    const json = JSON.parse(text.substring(47, text.length - 2));
-    const rows = json.table.rows;
+let allData = [], selectedTicker = null, currentView = 'overview';
+let chart = null, candleSeries = null, currentTF = '5m';
 
-    allData = rows
-      .filter(r => r.c[0] && r.c[0].v && r.c[0].v !== 'Ticker')
-      .map(r => {
-        const g = i => (r.c[i] && r.c[i].v != null) ? r.c[i].v : 0;
-        const s = i => (r.c[i] && r.c[i].v != null) ? String(r.c[i].v) : '—';
-        return {
-          ticker:    s(0),
-          spot:      g(1),
-          callWall:  g(2),
-          putWall:   g(3),
-          zeroGamma: g(4),
-          topGamma:  g(5),
-          dCall:     g(6),
-          dPut:      g(7),
-          theta:     g(8),
-          vega:      g(9),
-          oiCall:    g(10),
-          oiPut:     g(11),
-          pcRatio:   g(12),
-          c1:        s(13),
-          c2:        s(14),
-          c3:        s(15),
-          gl1:       g(16),
-          gl2:       g(17),
-          gl3:       g(18),
-          gl4:       g(19),
-          gl5:       g(20),
-          gl6:       g(21),
-          gl7:       g(22),
-          updatedAt: s(23)
-        };
-      })
-      .filter(d => d.ticker && d.spot > 0);
+// ── جلب Sheets ──
+async function fetchSheets() {
+  const res = await fetch(SHEET_URL);
+  const text = await res.text();
+  const json = JSON.parse(text.substring(47, text.length - 2));
+  allData = json.table.rows
+    .filter(r => r.c[0]?.v && r.c[0].v !== 'Ticker')
+    .map(r => {
+      const g = i => r.c[i]?.v ?? 0;
+      const s = i => String(r.c[i]?.v ?? '—');
+      return {
+        ticker:s(0), spot:g(1), callWall:g(2), putWall:g(3),
+        zeroGamma:g(4), topGamma:g(5), dCall:g(6), dPut:g(7),
+        theta:g(8), vega:g(9), oiCall:g(10), oiPut:g(11), pcRatio:g(12),
+        c1:s(13), c2:s(14), c3:s(15),
+        gl1:g(16),gl2:g(17),gl3:g(18),gl4:g(19),gl5:g(20),gl6:g(21),gl7:g(22),
+        updatedAt:s(23)
+      };
+    }).filter(d => d.spot > 0);
 
-    const lastUpdate = allData.length > 0 ? allData[allData.length-1].updatedAt : '—';
-    document.getElementById('update-badge').innerHTML = `آخر تحديث: <b>${lastUpdate.slice(11,16)}</b>`;
-
-    buildTabs();
-    renderOverview();
-    if (selectedTicker) renderSidebar(selectedTicker);
-
-  } catch(e) {
-    document.getElementById('cards-grid').innerHTML =
-      `<div class="error-box">خطأ في جلب البيانات — تأكد أن الـ Sheet عام<br><small>${e.message}</small></div>`;
-  }
+  const last = allData[allData.length-1]?.updatedAt || '—';
+  document.getElementById('update-badge').innerHTML = `آخر تحديث: <b>${last.slice(11,16)}</b>`;
+  buildTabs();
+  if (currentView === 'overview') renderOverview();
+  else if (selectedTicker) updateChart(selectedTicker);
 }
 
-// ── بناء التابز ──
+// ── Tabs ──
 function buildTabs() {
   const bar = document.getElementById('tabs-bar');
   bar.innerHTML = `
     <div class="tab ${currentView==='overview'?'active':''}" onclick="showView('overview')">الكل</div>
     <div class="tab ${currentView==='chart'?'active':''}" onclick="showView('chart')">الشارت</div>
-    <div style="width:1px;background:#1a1a1a;margin:0 4px"></div>
-  `;
+    <div style="width:1px;background:#1a1a1a;margin:0 4px;flex-shrink:0"></div>`;
   allData.forEach(d => {
-    const active = selectedTicker === d.ticker ? 'active' : '';
     const div = document.createElement('div');
-    div.className = `tab ${active}`;
+    div.className = `tab ${selectedTicker===d.ticker?'active':''}`;
     div.textContent = d.ticker;
     div.onclick = () => selectTicker(d.ticker);
     bar.appendChild(div);
   });
 }
 
-// ── اختيار رمز ──
-function selectTicker(ticker) {
-  selectedTicker = ticker;
-  buildTabs();
-  if (currentView === 'overview') {
-    document.querySelectorAll('.card').forEach(c => {
-      c.classList.toggle('selected', c.dataset.ticker === ticker);
-    });
-  }
-  showView('chart');
-}
-
-// ── عرض Overview ──
+// ── Overview ──
 function renderOverview() {
-  const grid = document.getElementById('cards-grid');
-  document.getElementById('overview-title').textContent = `${allData.length} رمز — ${new Date().toLocaleDateString('ar-SA')}`;
-  grid.innerHTML = '';
+  const panel = document.getElementById('view-overview');
+  if (!allData.length) return;
+  panel.innerHTML = `<div style="font-size:11px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">${allData.length} رمز</div><div class="ov-grid" id="ov-grid"></div>`;
+  const grid = document.getElementById('ov-grid');
   allData.forEach(d => {
     const range = d.callWall - d.putWall;
-    const spotPct = range > 0 ? Math.max(0, Math.min(100, ((d.spot - d.putWall) / range) * 100)) : 50;
-    const isBull = d.spot >= d.zeroGamma;
+    const pct = range > 0 ? Math.max(2, Math.min(97, ((d.spot-d.putWall)/range)*100)) : 50;
+    const bull = d.spot >= d.zeroGamma;
     const card = document.createElement('div');
-    card.className = `card ${selectedTicker === d.ticker ? 'selected' : ''}`;
-    card.dataset.ticker = d.ticker;
+    card.className = `ov-card ${selectedTicker===d.ticker?'sel':''}`;
     card.onclick = () => selectTicker(d.ticker);
     card.innerHTML = `
-      <div class="card-top">
-        <span class="card-ticker">${d.ticker}</span>
-        <span class="card-price">${d.spot.toLocaleString()}</span>
+      <div class="ov-top"><span class="ov-ticker">${d.ticker}</span><span class="ov-price">${d.spot.toLocaleString()}</span></div>
+      <div class="ov-levels">
+        <div class="ov-lrow"><span class="ov-ll">Call Wall</span><span class="ov-lv vc-cw">${d.callWall}</span></div>
+        <div class="ov-bar"><div class="ov-spot" style="left:${pct.toFixed(1)}%"></div></div>
+        <div class="ov-lrow"><span class="ov-ll">Zero Gamma</span><span class="ov-lv vc-zg">${d.zeroGamma}</span></div>
+        <div class="ov-lrow"><span class="ov-ll">Put Wall</span><span class="ov-lv vc-pw">${d.putWall}</span></div>
       </div>
-      <div class="mini-levels">
-        <div class="ml-row"><span class="ml-label">Call Wall</span><span class="ml-val lv-cw">${d.callWall}</span></div>
-        <div class="mini-bar"><div class="mini-spot" style="left:${spotPct.toFixed(1)}%"></div></div>
-        <div class="ml-row"><span class="ml-label">Zero Gamma</span><span class="ml-val lv-zg">${d.zeroGamma}</span></div>
-        <div class="ml-row"><span class="ml-label">Put Wall</span><span class="ml-val lv-pw">${d.putWall}</span></div>
-      </div>
-      <div class="card-footer">
-        <span class="status-badge ${isBull?'sb-bull':'sb-bear'}">${isBull?'إيجابي':'سلبي'}</span>
-        <span class="pc-ratio">P/C ${d.pcRatio}</span>
+      <div class="ov-footer">
+        <span class="ov-badge ${bull?'ob-bull':'ob-bear'}">${bull?'إيجابي':'سلبي'}</span>
+        <span class="ov-pc">P/C ${d.pcRatio}</span>
       </div>`;
     grid.appendChild(card);
   });
 }
 
-// ── الـ Sidebar ──
+// ── Sidebar ──
 function renderSidebar(ticker) {
-  const d = allData.find(x => x.ticker === ticker);
+  const d = allData.find(x => x.ticker===ticker);
   if (!d) return;
-  const gexLevels = [d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(g => g > 0);
-  const gexPills = gexLevels.map(g => {
-    let cls = g > d.callWall ? 'g-grn' : g >= d.zeroGamma ? 'g-pur' : 'g-red';
+  const gexs = [d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(g=>g>0);
+  const pills = gexs.map(g=>{
+    const cls = g>d.callWall?'g-grn':g>=d.zeroGamma?'g-pur':'g-red';
     return `<span class="gp ${cls}">${g}</span>`;
   }).join('');
-
-  const parseContract = str => {
-    if (!str || str === '—') return null;
-    const parts = str.split(' ');
-    const isCall = parts[1] === 'CALL';
-    return { strike: parts[0], type: parts[1], exp: parts[2], oi: parts[4] || '', isCall };
-  };
-  const contractHTML = (str) => {
-    const c = parseContract(str);
-    if (!c) return '';
-    return `<div class="contract ${c.isCall?'call':''}">
-      <div><div class="ct-type">${c.type}</div><div class="ct-strike">${c.strike}</div></div>
-      <div class="ct-detail">${c.exp}<br>${c.oi}</div>
+  const cHTML = str => {
+    if(!str||str==='—') return '';
+    const p=str.split(' ');
+    const isCall=p[1]==='CALL';
+    return `<div class="contract ${isCall?'call':''}">
+      <div><div class="ct-type">${p[1]}</div><div class="ct-strike">${p[0]}</div></div>
+      <div class="ct-info">${p[2]||''}<br>${p[4]||''}</div>
     </div>`;
   };
-
-  const sidebar = document.getElementById('sidebar-content');
-  sidebar.innerHTML = `
-    <div class="section-title">${ticker} — المستويات</div>
-    <div class="level-item li-cw"><span class="li-label">مقاومة الكول</span><span class="li-val lv-cw">${d.callWall}</span></div>
-    <div class="level-item li-hvl"><span class="li-label">الأعلى سيولة</span><span class="li-val lv-hvl">${d.topGamma}</span></div>
-    <div class="level-item li-zg"><span class="li-label">نقطة التحول</span><span class="li-val lv-zg">${d.zeroGamma}</span></div>
-    <div class="level-item li-pw"><span class="li-label">دعم البوت</span><span class="li-val lv-pw">${d.putWall}</span></div>
-    <div class="section-title" style="margin-top:12px">مستويات GEX</div>
-    <div class="gex-pills">${gexPills}</div>
-    <div class="section-title" style="margin-top:12px">أفضل العقود</div>
-    ${contractHTML(d.c1)}${contractHTML(d.c2)}${contractHTML(d.c3)}
-    <div class="stats-box">
-      <div class="stat-row"><span class="stat-label">OI Call</span><span class="stat-val" style="color:#00CC44">${Number(d.oiCall).toLocaleString()}</span></div>
-      <div class="stat-row"><span class="stat-label">OI Put</span><span class="stat-val" style="color:#FF4444">${Number(d.oiPut).toLocaleString()}</span></div>
-      <div class="stat-row"><span class="stat-label">P/C Ratio</span><span class="stat-val">${d.pcRatio}</span></div>
-      <div class="stat-row"><span class="stat-label">Delta Call</span><span class="stat-val" style="color:#00CC44">${d.dCall}M$</span></div>
-      <div class="stat-row"><span class="stat-label">Delta Put</span><span class="stat-val" style="color:#FF4444">${d.dPut}M$</span></div>
-      <div class="stat-row"><span class="stat-label">Vega</span><span class="stat-val">${d.vega}M$</span></div>
+  document.getElementById('sidebar').innerHTML = `
+    <div class="sb-section">
+      <div class="sb-title">${ticker} — المستويات</div>
+      <div class="lv-item lv-cw"><span class="lv-label">مقاومة الكول</span><span class="lv-val vc-cw">${d.callWall}</span></div>
+      <div class="lv-item lv-hvl"><span class="lv-label">الأعلى سيولة</span><span class="lv-val vc-hvl">${d.topGamma}</span></div>
+      <div class="lv-item lv-zg"><span class="lv-label">نقطة التحول</span><span class="lv-val vc-zg">${d.zeroGamma}</span></div>
+      <div class="lv-item lv-pw"><span class="lv-label">دعم البوت</span><span class="lv-val vc-pw">${d.putWall}</span></div>
     </div>
-  `;
+    <div class="sb-section">
+      <div class="sb-title">مستويات GEX</div>
+      <div class="gex-pills">${pills}</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">أفضل العقود</div>
+      ${cHTML(d.c1)}${cHTML(d.c2)}${cHTML(d.c3)}
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">الإحصائيات</div>
+      <div class="stat-box">
+        <div class="stat-row"><span class="sl">OI Call</span><span class="sv" style="color:#00CC44">${Number(d.oiCall).toLocaleString()}</span></div>
+        <div class="stat-row"><span class="sl">OI Put</span><span class="sv" style="color:#FF4444">${Number(d.oiPut).toLocaleString()}</span></div>
+        <div class="stat-row"><span class="sl">P/C Ratio</span><span class="sv">${d.pcRatio}</span></div>
+        <div class="stat-row"><span class="sl">Delta Call</span><span class="sv" style="color:#00CC44">${d.dCall}M$</span></div>
+        <div class="stat-row"><span class="sl">Delta Put</span><span class="sv" style="color:#FF4444">${d.dPut}M$</span></div>
+        <div class="stat-row"><span class="sl">Vega</span><span class="sv">${d.vega}M$</span></div>
+      </div>
+    </div>`;
 }
 
-// ── رسم الشارت ──
-function renderChart(ticker) {
-  const d = allData.find(x => x.ticker === ticker);
-  if (!d) return;
+// ── Chart ──
+function initChart() {
+  const container = document.getElementById('chart-container');
+  if (chart) { chart.remove(); chart = null; candleSeries = null; }
+  chart = LightweightCharts.createChart(container, {
+    layout: { background: { color: '#0a0a0a' }, textColor: '#555' },
+    grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+    rightPriceScale: { borderColor: '#1a1a1a' },
+    timeScale: { borderColor: '#1a1a1a', timeVisible: true, secondsVisible: false },
+    width: container.clientWidth,
+    height: container.clientHeight,
+  });
+  candleSeries = chart.addCandlestickSeries({
+    upColor: '#00CC44', downColor: '#FF4444',
+    borderUpColor: '#00CC44', borderDownColor: '#FF4444',
+    wickUpColor: '#00CC44', wickDownColor: '#FF4444',
+  });
+  window.addEventListener('resize', () => {
+    if (chart) chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+  });
+}
 
+async function updateChart(ticker) {
+  const d = allData.find(x => x.ticker===ticker);
+  if (!d) return;
   document.getElementById('chart-name').textContent = ticker;
   document.getElementById('chart-price').textContent = d.spot.toLocaleString();
+  renderSidebar(ticker);
+  if (!chart) initChart();
 
-  const gexLevels = [d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(g => g > 0);
-  const pad = (d.callWall - d.putWall) * 0.3;
-  const yMin = Math.min(d.putWall, ...gexLevels) - pad;
-  const yMax = Math.max(d.callWall, ...gexLevels) + pad;
+  // جلب الشموع من Yahoo Finance عبر CORS proxy
+  const tfMap = {'5m':'5m','15m':'15m','1h':'1h','1d':'1d'};
+  const rangeMap = {'5m':'1d','15m':'5d','1h':'1mo','1d':'3mo'};
+  const yfTicker = YF_MAP[ticker] || ticker;
+  const interval = tfMap[currentTF];
+  const range = rangeMap[currentTF];
+  const url = `https://corsproxy.io/?https://query1.finance.yahoo.com/v8/finance/chart/${yfTicker}?interval=${interval}&range=${range}`;
 
-  // نقاط وهمية حول السعر الحالي (في البورتال الحقيقي تجي من API)
-  const hours = ['9:30','10:00','10:30','11:00','11:30','12:00','12:30','1:00','1:30','2:00','2:30','3:00','3:30','4:00'];
-  const basePrice = d.spot;
-  const prices = hours.map((_, i) => {
-    const noise = (Math.random() - 0.5) * (d.callWall - d.putWall) * 0.15;
-    return +(basePrice + noise * (1 - i / hours.length)).toFixed(2);
-  });
-  prices[prices.length - 1] = d.spot;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const result = data.chart?.result?.[0];
+    if (!result) throw new Error('no data');
+    const ts = result.timestamp;
+    const q = result.indicators.quote[0];
+    const candles = ts.map((t,i) => ({
+      time: t,
+      open: +q.open[i]?.toFixed(2)||0,
+      high: +q.high[i]?.toFixed(2)||0,
+      low:  +q.low[i]?.toFixed(2)||0,
+      close:+q.close[i]?.toFixed(2)||0,
+    })).filter(c => c.open&&c.high&&c.low&&c.close);
 
-  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+    candleSeries.setData(candles);
 
-  const ctx = document.getElementById('mainChart');
-  chartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: hours,
-      datasets: [{
-        data: prices,
-        borderColor: '#4da6ff',
-        borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        fill: true,
-        backgroundColor: 'rgba(77,166,255,0.06)',
-        tension: 0.4
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          mode: 'index', intersect: false,
-          backgroundColor: '#111', titleColor: '#666',
-          bodyColor: '#fff', borderColor: '#222', borderWidth: 1,
-          callbacks: { label: ctx => '  ' + ctx.parsed.y.toFixed(2) }
-        }
-      },
-      scales: {
-        x: { grid: { color: '#111' }, ticks: { color: '#333', font: { size: 10 } } },
-        y: {
-          min: yMin, max: yMax,
-          grid: { color: '#141414' },
-          ticks: { color: '#333', font: { size: 10 }, callback: v => v.toFixed(0) }
-        }
-      }
-    },
-    plugins: [{
-      id: 'levels',
-      afterDraw(chart) {
-        const { ctx, chartArea: { left, right, top, bottom }, scales: { y } } = chart;
-        const lines = [
-          { v: d.callWall,  c: '#FF4444', dash: false, w: 1.5, lbl: `CW ${d.callWall}` },
-          { v: d.putWall,   c: '#00CC44', dash: false, w: 1.5, lbl: `PW ${d.putWall}` },
-          { v: d.zeroGamma, c: '#666',    dash: true,  w: 1,   lbl: `ZG ${d.zeroGamma}` },
-          { v: d.topGamma,  c: '#4da6ff', dash: false, w: 1,   lbl: `HVL ${d.topGamma}` },
-        ];
-        gexLevels.forEach(g => lines.push({ v: g, c: '#FFA500', dash: true, w: 0.8, lbl: String(g) }));
+    // آخر شمعة
+    const last = candles[candles.length-1];
+    const first = candles[0];
+    const chg = last.close - first.open;
+    const chgPct = ((chg/first.open)*100).toFixed(2);
+    document.getElementById('chart-chg').innerHTML =
+      `<span class="${chg>=0?'chg-up':'chg-dn'}">${chg>=0?'+':''}${chg.toFixed(2)} (${chgPct}%)</span>`;
 
-        lines.forEach(({ v, c, dash, w, lbl }) => {
-          const yp = y.getPixelForValue(v);
-          if (yp < top || yp > bottom) return;
-          ctx.save();
-          ctx.beginPath();
-          ctx.strokeStyle = c;
-          ctx.lineWidth = w;
-          ctx.globalAlpha = 0.85;
-          if (dash) ctx.setLineDash([4, 6]);
-          ctx.moveTo(left, yp);
-          ctx.lineTo(right, yp);
-          ctx.stroke();
-          ctx.setLineDash([]);
-          ctx.globalAlpha = 0.6;
-          ctx.fillStyle = c;
-          ctx.font = '9px system-ui';
-          ctx.textAlign = 'left';
-          ctx.fillText(lbl, left + 4, yp - 3);
-          ctx.restore();
-        });
-      }
-    }]
-  });
-}
-
-// ── التنقل بين العروض ──
-function showView(view) {
-  currentView = view;
-  document.getElementById('view-overview').style.display = view === 'overview' ? 'block' : 'none';
-  document.getElementById('view-chart').style.display    = view === 'chart'    ? 'block' : 'none';
-  buildTabs();
-  if (view === 'chart') {
-    const ticker = selectedTicker || (allData[0] && allData[0].ticker);
-    if (ticker) {
-      selectedTicker = ticker;
-      renderSidebar(ticker);
-      renderChart(ticker);
-    }
+    // رسم المستويات
+    drawLevels(d);
+    chart.timeScale().fitContent();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('chart-chg').textContent = 'تعذّر جلب الشموع';
   }
 }
 
-// ── تحديث تلقائي كل 5 دقائق ──
-fetchData();
-setInterval(fetchData, 5 * 60 * 1000);
+function drawLevels(d) {
+  if (!candleSeries) return;
+  const gexs = [d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(g=>g>0);
+  const lines = [
+    { price: d.callWall,  color: '#FF4444', width: 2, style: 0, title: `CW ${d.callWall}` },
+    { price: d.putWall,   color: '#00CC44', width: 2, style: 0, title: `PW ${d.putWall}` },
+    { price: d.zeroGamma, color: '#666666', width: 1, style: 1, title: `ZG ${d.zeroGamma}` },
+    { price: d.topGamma,  color: '#4da6ff', width: 1, style: 0, title: `HVL ${d.topGamma}` },
+  ];
+  gexs.forEach(g => lines.push({ price: g, color: '#FFA500', width: 1, style: 2, title: String(g) }));
+  lines.forEach(l => {
+    candleSeries.createPriceLine({ price: l.price, color: l.color, lineWidth: l.width, lineStyle: l.style, axisLabelVisible: true, title: l.title });
+  });
+}
+
+function setTF(el, tf) {
+  document.querySelectorAll('.tf').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  currentTF = tf;
+  if (selectedTicker) updateChart(selectedTicker);
+}
+
+function selectTicker(ticker) {
+  selectedTicker = ticker;
+  buildTabs();
+  showView('chart');
+}
+
+function showView(view) {
+  currentView = view;
+  document.getElementById('view-overview').style.display = view==='overview'?'flex':'none';
+  document.getElementById('view-chart').style.display    = view==='chart'?'flex':'none';
+  buildTabs();
+  if (view==='overview') renderOverview();
+  else {
+    const t = selectedTicker || allData[0]?.ticker;
+    if (t) { selectedTicker=t; updateChart(t); }
+  }
+}
+
+// ── Init ──
+fetchSheets();
+setInterval(fetchSheets, 5*60*1000);
 </script>
 </body>
 </html>
