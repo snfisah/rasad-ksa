@@ -119,8 +119,35 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
 .sb-bear{background:#1f0d0d;color:#FF4444;border:0.5px solid #3a1a1a}
 .sb-neu{background:#1a120d;color:#FFA500;border:0.5px solid #3a2a1a}
 .sb-blu{background:#0d1220;color:#4da6ff;border:0.5px solid #1a2a4a}
-.scr-empty{color:#444;font-size:13px;text-align:center;padding:60px;width:100%}
-</style>
+.search-box{background:#0d0d0d;border:0.5px solid #2a2a2a;border-radius:6px;color:#fff;font-size:11px;padding:4px 10px;outline:none;width:110px;flex-shrink:0}
+.search-box::placeholder{color:#444}
+.search-box:focus{border-color:#FFA500}
+.search-drop{position:absolute;top:100%;right:0;background:#111;border:0.5px solid #2a2a2a;border-radius:7px;z-index:999;min-width:140px;max-height:200px;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,.6)}
+.search-drop-item{padding:7px 12px;font-size:12px;cursor:pointer;color:#aaa;white-space:nowrap}
+.search-drop-item:hover{background:#1a1a1a;color:#fff}
+.search-wrap{position:relative;flex-shrink:0}
+/* Option Flow */
+.flow-panel{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.flow-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#0d0d0d;border-bottom:0.5px solid #1e1e1e;flex-shrink:0}
+.flow-item{background:#111;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;border-right:2px solid transparent;animation:fadeIn .3s ease}
+.flow-call{border-right-color:#00CC44}.flow-put{border-right-color:#FF4444}
+.flow-type{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px}
+.flow-call .flow-type{background:#0d1f0d;color:#00CC44}
+.flow-put .flow-type{background:#1f0d0d;color:#FF4444}
+.flow-strike{font-size:15px;font-weight:700;color:#fff}
+.flow-meta{font-size:10px;color:#555;text-align:left}
+.flow-size{font-size:12px;font-weight:700}
+.flow-bull{color:#00CC44}.flow-bear{color:#FF4444}
+.flow-premium{font-size:10px;color:#FFA500;font-weight:600}
+.flow-empty{color:#444;font-size:13px;text-align:center;padding:40px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+/* Gamma Profile مطور */
+.gp-chart{display:flex;align-items:flex-end;gap:2px;height:160px;padding:0 4px;overflow-x:auto}
+.gp-col{display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0}
+.gp-bar-up{background:#00CC44;border-radius:2px 2px 0 0;min-height:2px;width:18px;transition:height .3s}
+.gp-bar-dn{background:#FF4444;border-radius:0 0 2px 2px;min-height:2px;width:18px;transition:height .3s}
+.gp-bar-zero{height:1px;width:18px;background:#333}
+.gp-lbl{font-size:8px;color:#444;margin-top:3px;transform:rotate(-45deg);width:28px;text-align:center}
 </head>
 <body>
 <div class="header">
@@ -136,6 +163,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
   <div class="nav-tab" onclick="showView('overview')">الكل</div>
   <div class="nav-tab" onclick="showView('chart')">الشارت</div>
   <div class="nav-tab" onclick="showView('indicators')">المؤشرات</div>
+  <div class="nav-tab" onclick="showView('flow')">Option Flow</div>
   <div class="nav-tab" onclick="showView('screener')">الراصد</div>
 </div>
 
@@ -143,6 +171,11 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
   <button class="scroll-btn" onclick="scrollTickers(-120)">&#8250;</button>
   <div class="ticker-scroll" id="ticker-scroll"></div>
   <button class="scroll-btn" onclick="scrollTickers(120)">&#8249;</button>
+  <div class="search-wrap" style="padding:0 8px">
+    <input class="search-box" id="ticker-search" placeholder="🔍 بحث..." autocomplete="off"
+      oninput="onSearch(this.value)" onblur="setTimeout(()=>hideSearch(),200)">
+    <div class="search-drop" id="search-drop" style="display:none"></div>
+  </div>
 </div>
 
 <div id="view-overview" class="overview-panel">
@@ -188,6 +221,30 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
       <div class="ind-card-header"><span class="ind-card-title">Put / Call Ratio</span><select class="ind-select" id="sel-pc" onchange="renderPCCard()"></select></div>
       <div id="ind-pc-content"><div class="loading"><div class="spinner"></div></div></div>
     </div>
+  </div>
+</div>
+
+<!-- Option Flow Panel -->
+<div id="view-flow" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+  <div class="flow-header">
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:11px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:1px">Option Flow — Unusual Activity</span>
+      <span class="ws-badge ws-off" id="flow-badge" style="font-size:9px">⬤ OFF</span>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <select id="flow-ticker-filter" class="ind-select" onchange="filterFlow()">
+        <option value="">كل الأسهم</option>
+      </select>
+      <select id="flow-type-filter" class="ind-select" onchange="filterFlow()">
+        <option value="">كل العقود</option>
+        <option value="call">CALL فقط</option>
+        <option value="put">PUT فقط</option>
+      </select>
+      <button class="f-btn" onclick="clearFlow()" style="font-size:10px;padding:3px 8px">✕ مسح</button>
+    </div>
+  </div>
+  <div class="flow-panel" id="flow-list">
+    <div class="flow-empty">أبدأ تشغيل الـ Flow من زر الاتصال</div>
   </div>
 </div>
 
@@ -398,6 +455,150 @@ function renderPCCard(){const t=document.getElementById('sel-pc').value;const d=
 function renderAllIndicators(){renderGammaCard();renderPressureCard();renderDeltaCard();renderPCCard();}
 
 // ══════════════════════════════════════
+//   بحث التيكر
+// ══════════════════════════════════════
+function onSearch(val){
+  const drop=document.getElementById('search-drop');
+  if(!val.trim()){drop.style.display='none';return;}
+  const q=val.toUpperCase();
+  const matches=allData.filter(d=>d.ticker.startsWith(q)||d.ticker.includes(q)).slice(0,8);
+  if(!matches.length){drop.style.display='none';return;}
+  drop.innerHTML=matches.map(d=>`<div class="search-drop-item" onmousedown="pickSearch('${d.ticker}')">${d.ticker} <span style="color:#555;font-size:10px">${d.spot}</span></div>`).join('');
+  drop.style.display='block';
+}
+function pickSearch(ticker){
+  document.getElementById('ticker-search').value='';
+  document.getElementById('search-drop').style.display='none';
+  selectTicker(ticker);
+}
+function hideSearch(){document.getElementById('search-drop').style.display='none';}
+
+// ══════════════════════════════════════
+//   Gamma Profile المطور
+// ══════════════════════════════════════
+function renderGammaCard(){
+  const t=document.getElementById('sel-gamma').value;
+  const d=allData.find(x=>x.ticker===t);
+  const el=document.getElementById('ind-gamma-content');
+  if(!d){el.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:20px">لا توجد بيانات</div>';return;}
+  const pairs=getGammaData(d);
+  if(!pairs.length){el.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:20px">لا توجد بيانات Intraday</div>';return;}
+  const sorted=[...pairs].sort((a,b)=>a.strike-b.strike);
+  const maxAbs=Math.max(...sorted.map(p=>Math.abs(p.gex)));
+  const chartH=130;
+  let html=`<div style="font-size:10px;color:#555;margin-bottom:6px">السعر: <span style="color:#4da6ff;font-weight:600">${d.spot}</span></div>`;
+  html+=`<div style="display:flex;align-items:stretch;gap:1px;overflow-x:auto;padding-bottom:24px;min-height:${chartH*2+2}px;position:relative">`;
+  sorted.forEach(p=>{
+    const pct=Math.min(1,Math.abs(p.gex)/maxAbs);
+    const barH=Math.max(2,Math.round(pct*chartH));
+    const isSpot=Math.abs(p.strike-d.spot)<(d.callWall-d.putWall)*0.025;
+    const col=isSpot?'#4da6ff':p.gex>=0?'#00CC44':'#FF4444';
+    const lbl=p.strike>=1000?(p.strike/100).toFixed(0)+'h':String(p.strike);
+    html+=`<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:20px">
+      <div style="height:${chartH}px;display:flex;align-items:flex-end">
+        ${p.gex>=0?`<div style="height:${barH}px;width:14px;background:${col};border-radius:2px 2px 0 0;opacity:${isSpot?1:0.85}"></div>`:'<div style="width:14px"></div>'}
+      </div>
+      <div style="height:1px;width:20px;background:#2a2a2a"></div>
+      <div style="height:${chartH}px;display:flex;align-items:flex-start">
+        ${p.gex<0?`<div style="height:${barH}px;width:14px;background:${col};border-radius:0 0 2px 2px;opacity:${isSpot?1:0.85}"></div>`:'<div style="width:14px"></div>'}
+      </div>
+      <div style="font-size:7px;color:${isSpot?'#4da6ff':'#333'};transform:rotate(-45deg);margin-top:2px;width:20px;text-align:center">${lbl}</div>
+    </div>`;
+  });
+  html+=`</div><div style="display:flex;gap:12px;font-size:10px;margin-top:4px"><span style="color:#00CC44">▲ Call GEX</span><span style="color:#FF4444">▼ Put GEX</span><span style="color:#4da6ff">◉ السعر</span></div>`;
+  el.innerHTML=html;
+}
+
+// ══════════════════════════════════════
+//   Option Flow
+// ══════════════════════════════════════
+let flowWS=null,flowConnected=false,flowItems=[];
+const FLOW_MIN=$50000;
+
+function startFlow(){
+  if(flowWS&&flowWS.readyState<=1)return;
+  flowWS=new WebSocket('wss://socket.massive.com/options');
+  flowWS.onopen=()=>{flowWS.send(JSON.stringify({action:'auth',params:POLY_KEY}));};
+  flowWS.onmessage=(e)=>{
+    let msgs;try{msgs=JSON.parse(e.data);}catch(er){return;}
+    msgs.forEach(m=>{
+      if(m.ev==='status'&&m.status==='auth_success'){
+        flowConnected=true;
+        document.getElementById('flow-badge').className='ws-badge ws-live';
+        document.getElementById('flow-badge').textContent='⬤ LIVE';
+        flowWS.send(JSON.stringify({action:'subscribe',params:'T.*'}));
+      }
+      if(m.ev==='T') handleFlowTrade(m);
+    });
+  };
+  flowWS.onclose=()=>{
+    flowConnected=false;
+    const b=document.getElementById('flow-badge');
+    if(b){b.className='ws-badge ws-off';b.textContent='⬤ OFF';}
+  };
+  flowWS.onerror=()=>flowWS.close();
+}
+
+function handleFlowTrade(t){
+  const sym=t.sym||'';
+  const price=parseFloat(t.p)||0;
+  const size=parseInt(t.s)||0;
+  const premium=price*size*100;
+  if(premium<50000)return;
+  const m=sym.match(/O:([A-Z]+)(\d{6})([CP])(\d+)/);
+  if(!m)return;
+  const ticker=m[1],expRaw=m[2],type=m[3]==='C'?'call':'put';
+  const strike=parseInt(m[4])/1000;
+  const exp=`${expRaw.slice(2,4)}/${expRaw.slice(4,6)}`;
+  flowItems.unshift({ticker,type,strike,exp,price,size,premium,time:new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit',second:'2-digit'})});
+  if(flowItems.length>300)flowItems.pop();
+  if(currentView==='flow')renderFlow();
+  // تحديث فلتر الأسهم
+  const sel=document.getElementById('flow-ticker-filter');
+  if(sel&&![...sel.options].some(o=>o.value===ticker)){
+    const o=document.createElement('option');o.value=ticker;o.textContent=ticker;sel.appendChild(o);
+  }
+}
+
+function filterFlow(){renderFlow();}
+function clearFlow(){flowItems=[];renderFlow();}
+
+function renderFlow(){
+  const tickerF=document.getElementById('flow-ticker-filter')?.value||'';
+  const typeF=document.getElementById('flow-type-filter')?.value||'';
+  const list=flowItems.filter(i=>{
+    if(tickerF&&i.ticker!==tickerF)return false;
+    if(typeF&&i.type!==typeF)return false;
+    return true;
+  }).slice(0,100);
+  const el=document.getElementById('flow-list');
+  if(!list.length){
+    el.innerHTML=`<div class="flow-empty">${flowConnected?'⏳ في انتظار صفقات كبيرة (+$50K)...':`<div><div style="margin-bottom:12px">اضغط لبدء Option Flow</div><button onclick="startFlow()" style="padding:8px 20px;background:#FFA500;border:none;border-radius:6px;color:#000;font-weight:700;cursor:pointer;font-size:12px">⬤ Connect</button></div>`}</div>`;
+    return;
+  }
+  el.innerHTML=list.map(i=>{
+    const prem=i.premium>=1000000?'$'+(i.premium/1000000).toFixed(1)+'M':'$'+(i.premium/1000).toFixed(0)+'K';
+    const isGiant=i.premium>=500000;
+    return`<div class="flow-item flow-${i.type}" style="${isGiant?'border-width:3px;background:#161616':''}">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="flow-type">${i.type.toUpperCase()}</span>
+        <div>
+          <div style="display:flex;align-items:baseline;gap:6px">
+            <span style="font-size:13px;font-weight:700;color:#fff">${i.ticker}</span>
+            <span class="flow-strike">${i.strike}</span>
+            <span style="font-size:10px;color:#555">${i.exp}</span>
+          </div>
+          <div style="font-size:10px;color:#555">${i.time} · ${i.size.toLocaleString()} عقد · $${i.price.toFixed(2)}</div>
+        </div>
+      </div>
+      <div style="text-align:left">
+        <div class="flow-premium" style="${isGiant?'font-size:14px':''}">${prem}${isGiant?' 🔥':''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
 //   Snapshot polling — كل 10 ثوان كنسخة احتياطية
 // ══════════════════════════════════════
 let snapshotInterval=null;
@@ -590,7 +791,21 @@ function clearFilters(){activeFilters.clear();document.querySelectorAll('.f-btn'
 function sortScr(key){if(scrSort.key===key)scrSort.asc=!scrSort.asc;else{scrSort.key=key;scrSort.asc=true;}renderScr();}
 function renderScr(){const rows=allData.map(d=>{const range=(d.callWall-d.putWall)||1;const distCall=+((d.callWall-d.spot)/d.spot*100).toFixed(2);const distPut=+((d.spot-d.putWall)/d.spot*100).toFixed(2);const pctRange=(d.spot-d.putWall)/range*100;const bull=d.spot>=d.zeroGamma;return{...d,distCall,distPut,pctRange,bull};});const filtered=rows.filter(d=>{if(!activeFilters.size)return true;for(const f of activeFilters){if(f==='above_zero'&&d.spot<d.zeroGamma)return false;if(f==='below_zero'&&d.spot>=d.zeroGamma)return false;if(f==='near_put'&&d.distPut>3)return false;if(f==='near_call'&&d.distCall>3)return false;if(f==='below_call'&&d.spot>=d.callWall)return false;if(f==='above_put'&&d.spot<=d.putWall)return false;if(f==='gex_pos'&&!d.bull)return false;if(f==='gex_neg'&&d.bull)return false;if(f==='pc_high'&&d.pcRatio<1.2)return false;if(f==='pc_low'&&d.pcRatio>0.7)return false;}return true;});filtered.sort((a,b)=>{const va=typeof a[scrSort.key]==='string'?a[scrSort.key]:+a[scrSort.key];const vb=typeof b[scrSort.key]==='string'?b[scrSort.key]:+b[scrSort.key];return scrSort.asc?(va>vb?1:-1):(va<vb?1:-1);});const tbody=document.getElementById('scr-body');const empty=document.getElementById('scr-empty');if(!filtered.length){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';tbody.innerHTML=filtered.map(d=>{const posBadge=d.pctRange>75?'<span class="scr-badge sb-bear">قريب Call Wall</span>':d.pctRange<25?'<span class="scr-badge sb-bull">قريب Put Wall</span>':d.spot>=d.zeroGamma?'<span class="scr-badge sb-neu">فوق Zero Gamma</span>':'<span class="scr-badge sb-blu">تحت Zero Gamma</span>';const wBadge=d.bull?'<span class="scr-badge sb-bull">إيجابي</span>':'<span class="scr-badge sb-bear">سلبي</span>';const dcCol=d.distCall<2?'#FF4444':d.distCall<5?'#FFA500':'#666';const dpCol=d.distPut<2?'#00CC44':d.distPut<5?'#FFA500':'#666';return'<tr onclick="selectTicker(\''+d.ticker+'\');showView(\'chart\')"><td><span class="scr-ticker">'+d.ticker+'</span></td><td style="color:#aaa">'+d.spot.toLocaleString()+'</td><td>'+posBadge+'</td><td style="color:'+dcCol+'">'+d.distCall+'%</td><td style="color:'+dpCol+'">'+d.distPut+'%</td><td style="color:'+(d.pcRatio>=1.2?'#FF4444':d.pcRatio<=0.7?'#00CC44':'#FFA500')+'">'+d.pcRatio+'</td><td>'+wBadge+'</td></tr>';}).join('');}
 
-function showView(view){const views=['overview','chart','indicators','screener'];currentView=view;document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active',views[i]===view));document.getElementById('view-overview').style.display=view==='overview'?'flex':'none';document.getElementById('view-chart').style.display=view==='chart'?'flex':'none';document.getElementById('view-indicators').style.display=view==='indicators'?'flex':'none';const sv=document.getElementById('view-screener');if(sv)sv.style.display=view==='screener'?'flex':'none';if(view==='overview')renderOverview();else if(view==='chart'){const t=selectedTicker||allData[0]?.ticker;if(t){selectedTicker=t;loadChart(t);}}else if(view==='indicators')renderAllIndicators();else if(view==='screener')renderScr();}
+function showView(view){
+  const views=['overview','chart','indicators','flow','screener'];
+  currentView=view;
+  document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active',views[i]===view));
+  document.getElementById('view-overview').style.display=view==='overview'?'flex':'none';
+  document.getElementById('view-chart').style.display=view==='chart'?'flex':'none';
+  document.getElementById('view-indicators').style.display=view==='indicators'?'flex':'none';
+  document.getElementById('view-flow').style.display=view==='flow'?'flex':'none';
+  const sv=document.getElementById('view-screener');if(sv)sv.style.display=view==='screener'?'flex':'none';
+  if(view==='overview')renderOverview();
+  else if(view==='chart'){const t=selectedTicker||allData[0]?.ticker;if(t){selectedTicker=t;loadChart(t);}}
+  else if(view==='indicators')renderAllIndicators();
+  else if(view==='flow'){renderFlow();if(!flowConnected){}/* اتركه للمستخدم يضغط Connect */}
+  else if(view==='screener')renderScr();
+}
 
 // ══════════════════════════════════════
 //   التشغيل
