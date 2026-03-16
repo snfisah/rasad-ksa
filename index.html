@@ -604,7 +604,7 @@ function handleFlowTrade(t){
   if(!m)return;
   const ticker=m[1],expRaw=m[2],type=m[3]==='C'?'call':'put';
   const strike=parseInt(m[4])/1000;
-  const exp=`${expRaw.slice(2,4)}/${expRaw.slice(4,6)}`;
+  const exp=expRaw.slice(2,4)+'/'+expRaw.slice(4,6);
   flowItems.unshift({ticker,type,strike,exp,price,size,premium,time:new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit',second:'2-digit'})});
   if(flowItems.length>300)flowItems.pop();
   if(currentView==='flow')renderFlow();
@@ -822,7 +822,7 @@ function drawLevels(d){
 async function fetchTopContracts(ticker,spot,gexLevels){
   try{
     const sym=ticker==='SPX'?'I:SPX':(POLY_MAP[ticker]||ticker);
-    const url=`https://api.massive.com/v3/snapshot/options/${encodeURIComponent(sym)}?limit=250&apiKey=${POLY_KEY}`;
+    const url='https://api.massive.com/v3/snapshot/options/'+encodeURIComponent(sym)+'?limit=250&apiKey='+POLY_KEY;
     const res=await fetch(url);
     const data=await res.json();
     if(!data.results?.length)return[];
