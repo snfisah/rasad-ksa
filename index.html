@@ -310,8 +310,10 @@ function wsSubscribe(ticker){
 function handleLiveTick(msg){
   if(!candleSeries||!selectedTicker)return;
   const mult=selectedTicker==='SPX'?10:1;
-  const price=+(parseFloat(msg.c)*mult).toFixed(2);
-  if(!price||isNaN(price))return;
+  // Polygon A.* fields: c=close, o=open, h=high, l=low, s=start ms, e=end ms
+  const rawClose=msg.c??msg.vw??0;
+  const price=+(parseFloat(rawClose)*mult).toFixed(2);
+  if(!price||isNaN(price)||price<=0)return;
 
   // فلاش السعر
   const priceEl=document.getElementById('chart-price');
@@ -320,14 +322,16 @@ function handleLiveTick(msg){
   if(price>prev){priceEl.className='price-main flash-up';setTimeout(()=>priceEl.className='price-main',250);}
   else if(price<prev){priceEl.className='price-main flash-dn';setTimeout(()=>priceEl.className='price-main',250);}
 
-  // تحديث الشمعة الحالية
-  const barTime=Math.floor(msg.s/1000);
+  // حساب وقت الشمعة بناءً على الـ timeframe المختار
+  const tfMins=currentTF==='D'?1440:currentTF==='60'?60:parseInt(currentTF)||5;
+  const barTime=Math.floor(msg.s/1000/60/tfMins)*tfMins*60;
+
   if(!liveCandle||liveCandle.time!==barTime){
     liveCandle={
       time:barTime,
-      open:+(parseFloat(msg.op||msg.o)*mult).toFixed(2)||price,
-      high:+(parseFloat(msg.h)*mult).toFixed(2)||price,
-      low: +(parseFloat(msg.l)*mult).toFixed(2)||price,
+      open:+(parseFloat(msg.o||rawClose)*mult).toFixed(2)||price,
+      high:+(parseFloat(msg.h||rawClose)*mult).toFixed(2)||price,
+      low: +(parseFloat(msg.l||rawClose)*mult).toFixed(2)||price,
       close:price
     };
   } else {
@@ -337,7 +341,7 @@ function handleLiveTick(msg){
   }
   try{candleSeries.update(liveCandle);}catch(e){}
 
-  // تحديث % التغيير
+  // تحديث %
   if(openPrice){
     const chg=price-openPrice;
     const pct=((chg/openPrice)*100).toFixed(2);
@@ -368,8 +372,63 @@ function renderPCCard(){const t=document.getElementById('sel-pc').value;const d=
 function renderAllIndicators(){renderGammaCard();renderPressureCard();renderDeltaCard();renderPCCard();}
 
 // ══════════════════════════════════════
-//   الشارت
+//   Snapshot polling — كل 10 ثوان كنسخة احتياطية
 // ══════════════════════════════════════
+let snapshotInterval=null;
+
+async function fetchLivePrice(ticker){
+  try{
+    let sym=ticker==='SPX'?'SPY':(POLY_MAP[ticker]||ticker);
+    const mult=ticker==='SPX'?10:1;
+    const url='https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers/'+encodeURIComponent(sym)+'?apiKey='+POLY_KEY;
+    const res=await fetch(url);
+    const data=await res.json();
+    const price=data?.ticker?.lastTrade?.p||data?.ticker?.day?.c||data?.ticker?.prevDay?.c;
+    if(price&&price>0){
+      const livePrice=+(price*mult).toFixed(2);
+      // تحديث السعر فقط إذا WebSocket غير نشط
+      if(!wsConnected){
+        const priceEl=document.getElementById('chart-price');
+        const prev=parseFloat((priceEl.textContent||'0').replace(/,/g,''))||0;
+        if(Math.abs(livePrice-prev)>0.001){
+          priceEl.textContent=livePrice.toLocaleString();
+          if(livePrice>prev){priceEl.className='price-main flash-up';setTimeout(()=>priceEl.className='price-main',250);}
+          else if(livePrice<prev){priceEl.className='price-main flash-dn';setTimeout(()=>priceEl.className='price-main',250);}
+          // تحديث الشمعة الأخيرة
+          if(candleSeries&&liveCandle){
+            liveCandle.close=livePrice;
+            liveCandle.high=Math.max(liveCandle.high,livePrice);
+            liveCandle.low=Math.min(liveCandle.low,livePrice);
+            try{candleSeries.update(liveCandle);}catch(e){}
+          }
+          if(openPrice){
+            const chg=livePrice-openPrice;
+            const pct=((chg/openPrice)*100).toFixed(2);
+            document.getElementById('chart-chg').innerHTML='<span class="'+(chg>=0?'chg-up':'chg-dn')+'">'+(chg>=0?'+':'')+chg.toFixed(2)+' ('+pct+'%)</span>';
+          }
+        }
+      }
+      return livePrice;
+    }
+  }catch(e){}
+  return null;
+}
+
+function startSnapshotPolling(ticker){
+  stopSnapshotPolling();
+  if(!isMarketOpen())return;
+  // أول جلب فوري
+  fetchLivePrice(ticker);
+  // ثم كل 10 ثوان
+  snapshotInterval=setInterval(()=>{
+    if(selectedTicker===ticker&&isMarketOpen()) fetchLivePrice(ticker);
+    else stopSnapshotPolling();
+  },10000);
+}
+
+function stopSnapshotPolling(){
+  if(snapshotInterval){clearInterval(snapshotInterval);snapshotInterval=null;}
+}
 let lastFetchTime=0;
 async function rateLimitedFetch(url){const now=Date.now();const diff=now-lastFetchTime;if(diff<500)await new Promise(r=>setTimeout(r,500-diff));lastFetchTime=Date.now();return fetch(url);}
 
@@ -420,10 +479,11 @@ async function loadChart(ticker){
     const pct=((chg/openPrice)*100).toFixed(2);
     document.getElementById('chart-price').textContent=last.close.toLocaleString();
     document.getElementById('chart-chg').innerHTML='<span class="'+(chg>=0?'chg-up':'chg-dn')+'">'+(chg>=0?'+':'')+chg.toFixed(2)+' ('+pct+'%)</span>';
-    // WebSocket
+    // WebSocket + Snapshot polling
     if(isMarketOpen()){
       if(!wsConnected)wsConnect();
       else wsSubscribe(ticker);
+      startSnapshotPolling(ticker);
     }
   }catch(e){document.getElementById('chart-chg').innerHTML='<span style="color:#FF4444;font-size:11px">خطأ: '+e.message+'</span>';}
 }
