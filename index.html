@@ -478,8 +478,11 @@ function drawLevels(d){
   // ── مستويات GEX بين Put Wall و Call Wall فقط ──
   const lo=Math.min(d.putWall,d.callWall);
   const hi=Math.max(d.putWall,d.callWall);
+  const minGap=(hi-lo)*0.05; // 5% من النطاق كحد أدنى بين المستويات
   const mainPrices=new Set([d.callWall,d.putWall,d.zeroGamma,d.topGamma]);
 
+  // جمع المستويات المرشحة
+  let candidates=[];
   if(d.intradayRaw&&d.intradayRaw!=='—'&&d.intradayRaw.length>5){
     d.intradayRaw.split(',').forEach(pair=>{
       const parts=pair.split(':');
@@ -487,18 +490,30 @@ function drawLevels(d){
       const strike=parseFloat(parts[0]);
       const gex=parseFloat(parts[1]);
       if(!strike||isNaN(gex))return;
-      // فقط المستويات بين PW و CW
       if(strike<=lo||strike>=hi)return;
       if(mainPrices.has(strike))return;
-      try{candleSeries.createPriceLine({price:strike,color:gex>0?'#00AA33':'#CC2222',lineWidth:1,lineStyle:2,axisLabelVisible:true,title:(gex>0?'+':'')+Math.round(gex/1000)+'K'});}catch(e){}
+      candidates.push({price:strike,gex:Math.abs(gex),color:gex>0?'#00AA33':'#CC2222',label:(gex>0?'+':'')+Math.round(gex/1000)+'K'});
     });
   } else {
     [d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(g=>g>0).forEach(g=>{
       if(g<=lo||g>=hi)return;
       if(mainPrices.has(g))return;
-      try{candleSeries.createPriceLine({price:g,color:'#FFA500',lineWidth:1,lineStyle:2,axisLabelVisible:true,title:String(g)});}catch(e){}
+      candidates.push({price:g,gex:1,color:'#FFA500',label:String(g)});
     });
   }
+
+  // ترتيب حسب القوة تنازلياً ثم تصفية المتقاربة
+  candidates.sort((a,b)=>b.gex-a.gex);
+  const selected=[];
+  candidates.forEach(c=>{
+    const tooClose=selected.some(s=>Math.abs(s.price-c.price)<minGap);
+    if(!tooClose) selected.push(c);
+  });
+
+  // رسم المستويات المختارة
+  selected.forEach(c=>{
+    try{candleSeries.createPriceLine({price:c.price,color:c.color,lineWidth:1,lineStyle:2,axisLabelVisible:true,title:c.label});}catch(e){}
+  });
 }
 
 async function loadChart(ticker){
