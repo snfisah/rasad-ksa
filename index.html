@@ -354,7 +354,28 @@ function handleLiveTick(msg){
 // ══════════════════════════════════════
 function parseCSV(text){const rows=[];for(const line of text.trim().split('\n')){const cols=[];let cur='',inQ=false;for(const ch of line){if(ch==='"')inQ=!inQ;else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=ch;}cols.push(cur.trim());rows.push(cols);}return rows;}
 
-async function fetchSheets(){try{const res=await fetch(CSV_URL);const text=await res.text();const rows=parseCSV(text);allData=rows.slice(1).filter(r=>r[0]&&r[0]!=='Ticker'&&parseFloat(r[1])>0).map(r=>{const g=i=>parseFloat((r[i]||'0').replace(/[^0-9.\-]/g,''))||0;const s=i=>(r[i]||'—').replace(/"/g,'').trim();return{ticker:s(0),spot:g(1),callWall:g(2),putWall:g(3),zeroGamma:g(4),topGamma:g(5),dCall:g(6),dPut:g(7),theta:g(8),vega:g(9),oiCall:g(10),oiPut:g(11),pcRatio:g(12),c1:s(13),c2:s(14),c3:s(15),gl1:g(16),gl2:g(17),gl3:g(18),gl4:g(19),gl5:g(20),gl6:g(21),gl7:g(22),intradayRaw:s(23),updatedAt:s(24)};});const last=allData[allData.length-1]?.updatedAt||'—';document.getElementById('update-badge').innerHTML='آخر تحديث: <b>'+last.slice(11,16)+'</b>';buildToolbar();buildIndicatorSelects();if(currentView==='overview')renderOverview();else if(currentView==='chart'&&selectedTicker&&!chartLoaded)loadChart(selectedTicker);else if(currentView==='chart'&&selectedTicker)renderSidebar(selectedTicker);else if(currentView==='indicators')renderAllIndicators();}catch(e){document.getElementById('update-badge').textContent='خطأ في التحميل';}}
+async function fetchSheets(){try{const res=await fetch(CSV_URL);const text=await res.text();const rows=parseCSV(text);allData=rows.slice(1).filter(r=>r[0]&&r[0]!=='Ticker'&&parseFloat(r[1])>0).map(r=>{
+  const g=i=>parseFloat((r[i]||'0').replace(/[^0-9.\-]/g,''))||0;
+  const s=i=>(r[i]||'—').replace(/"/g,'').trim();
+  // تمييز: الرئيسيات عندها عقود بـ | في عمود 13 أو 14
+  const col13=s(13),col14=s(14);
+  const isMain=col13.includes('|')||col14.includes('|')||col13.includes('CALL')||col13.includes('PUT');
+  if(isMain){
+    return{ticker:s(0),spot:g(1),callWall:g(2),putWall:g(3),zeroGamma:g(4),topGamma:g(5),
+      dCall:g(6),dPut:g(7),theta:g(8),vega:g(9),oiCall:g(10),oiPut:g(11),pcRatio:g(12),
+      c1:s(13),c2:s(14),c3:s(15),
+      gl1:g(16),gl2:g(17),gl3:g(18),gl4:g(19),gl5:g(20),gl6:g(21),gl7:g(22),
+      intradayRaw:s(23),updatedAt:s(24)};
+  } else {
+    // إضافية: أعمدة 6-12 = سترايك برايس، 13=pcRatio، 14=oiCall، 15=تاريخ
+    return{ticker:s(0),spot:g(1),callWall:g(2),putWall:g(3),zeroGamma:g(4),topGamma:g(5),
+      dCall:0,dPut:0,theta:0,vega:0,
+      oiCall:g(14),oiPut:0,pcRatio:g(13),
+      c1:'—',c2:'—',c3:'—',
+      gl1:g(6),gl2:g(7),gl3:g(8),gl4:g(9),gl5:g(10),gl6:g(11),gl7:g(12),
+      intradayRaw:'—',updatedAt:s(15)};
+  }
+});const last=allData[allData.length-1]?.updatedAt||'—';document.getElementById('update-badge').innerHTML='آخر تحديث: <b>'+last.slice(11,16)+'</b>';buildToolbar();buildIndicatorSelects();if(currentView==='overview')renderOverview();else if(currentView==='chart'&&selectedTicker&&!chartLoaded)loadChart(selectedTicker);else if(currentView==='chart'&&selectedTicker)renderSidebar(selectedTicker);else if(currentView==='indicators')renderAllIndicators();}catch(e){document.getElementById('update-badge').textContent='خطأ في التحميل';}}
 
 function buildToolbar(){const s=document.getElementById('ticker-scroll');s.innerHTML='';allData.forEach(d=>{const c=document.createElement('div');c.className='t-chip'+(selectedTicker===d.ticker?' active':'');c.textContent=d.ticker;c.onclick=()=>selectTicker(d.ticker);s.appendChild(c);});}
 function scrollTickers(dx){document.getElementById('ticker-scroll').scrollBy({left:dx,behavior:'smooth'});}
@@ -468,46 +489,50 @@ function initChart(){const container=document.getElementById('chart-container');
 function drawLevels(d){
   if(!candleSeries)return;
 
-  // ── الـ 4 مستويات الرئيسية دائماً ──
-  [{price:d.callWall,color:'#FF4444',width:2,style:0,title:'CW '+d.callWall},
-   {price:d.putWall, color:'#00CC44',width:2,style:0,title:'PW '+d.putWall},
-   {price:d.zeroGamma,color:'#1E90FF',width:1,style:1,title:'ZG '+d.zeroGamma},
-   {price:d.topGamma, color:'#FF8C00',width:1,style:0,title:'HVL '+d.topGamma}
-  ].forEach(l=>{try{candleSeries.createPriceLine({price:l.price,color:l.color,lineWidth:l.width,lineStyle:l.style,axisLabelVisible:true,title:l.title});}catch(e){}});
+  // ── الـ 4 مستويات الرئيسية (بدون تكرار) ──
+  const drawn=new Set();
+  const tryDraw=(price,color,width,style,title)=>{
+    if(!price||drawn.has(price))return;
+    drawn.add(price);
+    try{candleSeries.createPriceLine({price,color,lineWidth:width,lineStyle:style,axisLabelVisible:true,title});}catch(e){}
+  };
+  tryDraw(d.callWall, '#FF4444',2,0,'CW '+d.callWall);
+  tryDraw(d.putWall,  '#00CC44',2,0,'PW '+d.putWall);
+  tryDraw(d.zeroGamma,'#1E90FF',1,1,'ZG '+d.zeroGamma);
+  tryDraw(d.topGamma, '#FF8C00',1,0,'HVL '+d.topGamma);
 
-  // ── مستويات GEX بين Put Wall و Call Wall فقط ──
+  // ── مستويات GEX بين PW و CW فقط ──
   const lo=Math.min(d.putWall,d.callWall);
   const hi=Math.max(d.putWall,d.callWall);
-  const minGap=(hi-lo)*0.05; // 5% من النطاق كحد أدنى بين المستويات
-  const mainPrices=new Set([d.callWall,d.putWall,d.zeroGamma,d.topGamma]);
+  const range=hi-lo;
+  if(range<=0)return;
 
-  // جمع المستويات المرشحة
+  // 15% من النطاق كحد أدنى (≈15 نقطة لـ SPX برنج 100)
+  const minGap=range*0.15;
+  const mainPrices=[d.callWall,d.putWall,d.zeroGamma,d.topGamma];
+
   let candidates=[];
   if(d.intradayRaw&&d.intradayRaw!=='—'&&d.intradayRaw.length>5){
     d.intradayRaw.split(',').forEach(pair=>{
-      const parts=pair.split(':');
-      if(parts.length!==2)return;
-      const strike=parseFloat(parts[0]);
-      const gex=parseFloat(parts[1]);
-      if(!strike||isNaN(gex))return;
-      if(strike<=lo||strike>=hi)return;
-      if(mainPrices.has(strike))return;
-      candidates.push({price:strike,gex:Math.abs(gex),color:gex>0?'#00AA33':'#CC2222',label:(gex>0?'+':'')+Math.round(gex/1000)+'K'});
+      const parts=pair.split(':');if(parts.length!==2)return;
+      const strike=parseFloat(parts[0]),gex=parseFloat(parts[1]);
+      if(!strike||isNaN(gex)||strike<=lo||strike>=hi)return;
+      if(mainPrices.some(p=>Math.abs(strike-p)<minGap))return;
+      candidates.push({price:strike,strength:Math.abs(gex),color:gex>0?'#00AA33':'#CC2222',label:(gex>0?'+':'')+Math.round(gex/1000)+'K'});
     });
   } else {
-    [d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(g=>g>0).forEach(g=>{
-      if(g<=lo||g>=hi)return;
-      if(mainPrices.has(g))return;
-      candidates.push({price:g,gex:1,color:'#FFA500',label:String(g)});
+    [d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(g=>g>0&&g>lo&&g<hi).forEach(g=>{
+      if(mainPrices.some(p=>Math.abs(g-p)<minGap))return;
+      candidates.push({price:g,strength:1,color:'#FFA500',label:String(g)});
     });
   }
 
-  // ترتيب حسب القوة تنازلياً ثم تصفية المتقاربة
-  candidates.sort((a,b)=>b.gex-a.gex);
+  candidates.sort((a,b)=>b.strength-a.strength);
   const selected=[];
   candidates.forEach(c=>{
-    const tooClose=selected.some(s=>Math.abs(s.price-c.price)<minGap);
-    if(!tooClose) selected.push(c);
+    const clash=selected.some(s=>Math.abs(s.price-c.price)<minGap)||
+                mainPrices.some(p=>Math.abs(c.price-p)<minGap);
+    if(!clash)selected.push(c);
   });
 
   // رسم المستويات المختارة
