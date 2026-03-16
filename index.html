@@ -70,6 +70,28 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
 .ov-pc{font-size:10px;color:#444}
 .loading{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;flex:1;color:#333;font-size:13px}
 .spinner{width:28px;height:28px;border:2px solid #1a1a1a;border-top-color:#FFA500;border-radius:50%;animation:spin .8s linear infinite}
+/* ── المؤشرات ── */
+.ind-section{padding:12px 14px 10px;border-bottom:0.5px solid #141414}
+.ind-title{font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:600}
+.gp-bar-wrap{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.gp-label{font-size:10px;color:#666;width:36px;text-align:right;flex-shrink:0}
+.gp-track{flex:1;height:9px;background:#111;border-radius:2px;position:relative;overflow:visible}
+.gp-fill{height:100%;border-radius:2px;min-width:2px}
+.gp-val{font-size:9px;color:#444;width:30px;text-align:left;flex-shrink:0}
+.gp-spot{position:absolute;top:-3px;width:2px;height:15px;background:#4da6ff;border-radius:1px;z-index:2}
+.pressure-bar{height:10px;background:#1a1a1a;border-radius:5px;overflow:hidden;margin:7px 0;position:relative}
+.pressure-call{height:100%;float:left;background:#00CC44;transition:width .4s}
+.pressure-put{height:100%;float:right;background:#FF4444;transition:width .4s}
+.pressure-lbl{display:flex;justify-content:space-between;font-size:10px;margin-top:4px}
+.delta-bar{height:8px;background:#1a1a1a;border-radius:4px;position:relative;margin:7px 0}
+.delta-fill{height:100%;border-radius:4px;position:absolute;transition:all .4s}
+.delta-center{position:absolute;left:50%;top:-2px;width:1px;height:12px;background:#333}
+.pc-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.pc-big{font-size:20px;font-weight:700}
+.pc-tag{font-size:10px;padding:3px 8px;border-radius:5px;font-weight:600}
+.pc-bull{background:#0d1f0d;color:#00CC44;border:0.5px solid #1a3a1a}
+.pc-bear{background:#1f0d0d;color:#FF4444;border:0.5px solid #3a1a1a}
+.pc-neu{background:#1a120d;color:#FFA500;border:0.5px solid #3a2a1a}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
@@ -208,6 +230,104 @@ function renderOverview() {
 }
 
 // ── Sidebar ──
+function buildGammaProfile(d) {
+  if (!d.intradayRaw || d.intradayRaw === '—' || d.intradayRaw.length < 5) return '';
+  const pairs = d.intradayRaw.split(',').map(p => {
+    const s = p.split(':'); return {strike: parseFloat(s[0]), gex: parseFloat(s[1])};
+  }).filter(p => p.strike && !isNaN(p.gex));
+  if (!pairs.length) return '';
+  const maxAbs = Math.max(...pairs.map(p => Math.abs(p.gex)));
+  if (!maxAbs) return '';
+  // فقط المستويات ذات الأهمية (أعلى 12 بالقيمة المطلقة)
+  const top = [...pairs].sort((a,b) => Math.abs(b.gex)-Math.abs(a.gex)).slice(0,12)
+    .sort((a,b) => b.strike - a.strike);
+  let html = '<div class="ind-section"><div class="ind-title">Gamma Profile</div>';
+  top.forEach(p => {
+    const pct = Math.min(100, (Math.abs(p.gex)/maxAbs)*100);
+    const col = p.gex >= 0 ? '#00CC44' : '#FF4444';
+    const val = p.gex >= 0 ? '+'+Math.round(p.gex/1000)+'K' : Math.round(p.gex/1000)+'K';
+    const spotPct = d.spot > 0 ? Math.max(0,Math.min(100,((d.spot-p.strike)/(maxAbs*0.001+1))*50+50)) : -1;
+    html += '<div class="gp-bar-wrap">'+
+      '<span class="gp-label">'+p.strike+'</span>'+
+      '<div class="gp-track">'+
+        '<div class="gp-fill" style="width:'+pct.toFixed(1)+'%;background:'+col+'"></div>'+
+        (Math.abs(p.strike - d.spot) < (d.callWall - d.putWall)*0.03 ?
+          '<div class="gp-spot" style="left:'+pct.toFixed(1)+'%"></div>' : '')+
+      '</div>'+
+      '<span class="gp-val" style="color:'+col+'">'+val+'</span>'+
+    '</div>';
+  });
+  return html + '</div>';
+}
+
+function buildPressure(d) {
+  if (!d.intradayRaw || d.intradayRaw === '—' || d.intradayRaw.length < 5) return '';
+  const pairs = d.intradayRaw.split(',').map(p => {
+    const s = p.split(':'); return parseFloat(s[1]);
+  }).filter(v => !isNaN(v));
+  const callSum = pairs.filter(v=>v>0).reduce((a,b)=>a+b,0);
+  const putSum  = Math.abs(pairs.filter(v=>v<0).reduce((a,b)=>a+b,0));
+  const total   = callSum + putSum;
+  if (!total) return '';
+  const callPct = Math.round((callSum/total)*100);
+  const putPct  = 100 - callPct;
+  const bull = callPct > putPct;
+  return '<div class="ind-section"><div class="ind-title">0DTE Pressure</div>'+
+    '<div class="stat-box" style="padding:10px">'+
+    '<div class="pressure-bar" style="overflow:hidden;display:flex">'+
+      '<div class="pressure-call" style="width:'+callPct+'%;height:100%;background:#00CC44"></div>'+
+      '<div style="flex:1;background:#FF4444"></div>'+
+    '</div>'+
+    '<div class="pressure-lbl">'+
+      '<span style="color:#00CC44">Call '+callPct+'%</span>'+
+      '<span style="color:'+(bull?'#00CC44':'#FF4444')+'">'+
+        (bull ? '🟢 ضغط شراء' : '🔴 ضغط بيع')+'</span>'+
+      '<span style="color:#FF4444">Put '+putPct+'%</span>'+
+    '</div></div></div>';
+}
+
+function buildDeltaNet(d) {
+  const net = d.dCall + d.dPut;
+  const maxVal = Math.max(Math.abs(d.dCall), Math.abs(d.dPut), 0.01);
+  const pct = Math.min(100, (Math.abs(net)/maxVal)*50);
+  const col  = net >= 0 ? '#00CC44' : '#FF4444';
+  const dir  = net >= 0 ? 'right' : 'left';
+  return '<div class="ind-section"><div class="ind-title">Delta Net Exposure</div>'+
+    '<div class="stat-box" style="padding:10px">'+
+    '<div class="delta-bar">'+
+      '<div class="delta-center"></div>'+
+      '<div class="delta-fill" style="width:'+pct+'%;'+dir+':50%;background:'+col+'"></div>'+
+    '</div>'+
+    '<div class="pressure-lbl">'+
+      '<span style="color:#00CC44">Call '+d.dCall+'M$</span>'+
+      '<span style="color:'+col+';font-weight:600">Net '+(net>=0?'+':'')+net.toFixed(1)+'M$</span>'+
+      '<span style="color:#FF4444">Put '+d.dPut+'M$</span>'+
+    '</div></div></div>';
+}
+
+function buildPCRatio(d) {
+  const pc = d.pcRatio;
+  let tag, cls, hint;
+  if      (pc >= 1.2) { tag='تحوط مرتفع'; cls='pc-bear'; hint='إشارة عكسية صعودية محتملة'; }
+  else if (pc <= 0.7) { tag='مضاربة مفرطة'; cls='pc-bull'; hint='تحذير — استنزاف الشراء'; }
+  else                 { tag='متوازن'; cls='pc-neu'; hint='السوق في حالة طبيعية'; }
+  return '<div class="ind-section"><div class="ind-title">Put / Call Ratio</div>'+
+    '<div class="stat-box" style="padding:10px">'+
+    '<div class="pc-row">'+
+      '<span class="pc-big" style="color:'+(pc>=1.2?'#FF4444':pc<=0.7?'#00CC44':'#FFA500')+'">'+pc+'</span>'+
+      '<div style="text-align:right">'+
+        '<div><span class="pc-tag '+cls+'">'+tag+'</span></div>'+
+        '<div style="font-size:10px;color:#444;margin-top:4px">'+hint+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="height:6px;background:#1a1a1a;border-radius:3px;margin-top:8px;overflow:hidden">'+
+      '<div style="height:100%;width:'+Math.min(100,pc/2*100)+'%;background:'+(pc>=1.2?'#FF4444':pc<=0.7?'#00CC44':'#FFA500')+';border-radius:3px;transition:width .4s"></div>'+
+    '</div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:9px;color:#333;margin-top:3px">'+
+      '<span>0.7 شراء</span><span>1.0</span><span>1.2 تحوط</span>'+
+    '</div></div></div>';
+}
+
 function renderSidebar(ticker) {
   const d = allData.find(x => x.ticker===ticker);
   if (!d) return;
@@ -234,7 +354,11 @@ function renderSidebar(ticker) {
     '<div class="stat-row"><span class="sl">Delta Call</span><span class="sv" style="color:#00CC44">'+d.dCall+'M$</span></div>'+
     '<div class="stat-row"><span class="sl">Delta Put</span><span class="sv" style="color:#FF4444">'+d.dPut+'M$</span></div>'+
     '<div class="stat-row"><span class="sl">Vega</span><span class="sv">'+d.vega+'M$</span></div>'+
-    '</div></div>';
+    '</div></div>'+
+    buildPressure(d)+
+    buildDeltaNet(d)+
+    buildPCRatio(d)+
+    buildGammaProfile(d);
 }
 
 // ── Polygon شموع ──
