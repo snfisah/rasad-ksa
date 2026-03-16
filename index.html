@@ -260,7 +260,7 @@ function wsSetStatus(live){
 
 function wsConnect(){
   if(ws&&ws.readyState<=1)return;
-  ws=new WebSocket('wss://socket.polygon.io/stocks');
+  ws=new WebSocket('wss://socket.massive.com/stocks');
 
   ws.onopen=()=>{
     ws.send(JSON.stringify({action:'auth',params:POLY_KEY}));
