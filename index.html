@@ -381,7 +381,7 @@ async function fetchLivePrice(ticker){
     let sym=ticker==='SPX'?'SPY':(POLY_MAP[ticker]||ticker);
     const mult=ticker==='SPX'?10:1;
     // جلب السعر الحي من snapshot
-    const url='https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers/'+encodeURIComponent(sym)+'?apiKey='+POLY_KEY;
+    const url='https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers/'+encodeURIComponent(sym)+'?apiKey='+POLY_KEY;
     const res=await fetch(url);
     const data=await res.json();
     const t=data?.ticker;
@@ -454,7 +454,7 @@ async function fetchCandles(ticker,tf){
   else from.setDate(from.getDate()-7);
   const toDate=new Date(now);toDate.setDate(toDate.getDate()+1);
   const span=tf==='D'?'day':'minute',m=tf==='D'?1:parseInt(tf)||5;
-  const url='https://api.polygon.io/v2/aggs/ticker/'+encodeURIComponent(sym)+'/range/'+m+'/'+span+'/'+from.toISOString().slice(0,10)+'/'+toDate.toISOString().slice(0,10)+'?adjusted=true&sort=asc&limit=5000&apiKey='+POLY_KEY;
+  const url='https://api.massive.com/v2/aggs/ticker/'+encodeURIComponent(sym)+'/range/'+m+'/'+span+'/'+from.toISOString().slice(0,10)+'/'+toDate.toISOString().slice(0,10)+'?adjusted=true&sort=asc&limit=5000&apiKey='+POLY_KEY;
   try{
     const res=await rateLimitedFetch(url);
     if(res.status===429){await new Promise(r=>setTimeout(r,2000));const r2=await fetch(url);const d2=await r2.json();if(!d2.results?.length)return[];return d2.results.map(b=>({time:b.t/1000,open:+(b.o*mult).toFixed(2),high:+(b.h*mult).toFixed(2),low:+(b.l*mult).toFixed(2),close:+(b.c*mult).toFixed(2)}));}
