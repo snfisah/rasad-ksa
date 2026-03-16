@@ -909,6 +909,7 @@ function showView(view){
 //   التشغيل
 // ══════════════════════════════════════
 fetchSheets();
+showView('overview');
 setInterval(fetchSheets, 5*60*1000);
 
 // تشغيل WebSocket فقط أثناء السوق
