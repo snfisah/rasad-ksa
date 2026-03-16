@@ -916,17 +916,16 @@ function showView(view){
 // ══════════════════════════════════════
 //   التشغيل
 // ══════════════════════════════════════
-fetchSheets();
-setInterval(fetchSheets, 5*60*1000);
-
-// تشغيل WebSocket فقط أثناء السوق
-if(isMarketOpen()) wsConnect();
-
-// مراقبة فتح/إغلاق السوق كل دقيقة
-setInterval(()=>{
-  if(isMarketOpen()&&!wsConnected) wsConnect();
-  if(!isMarketOpen()&&ws&&ws.readyState===1) ws.close();
-}, 60000);
+document.addEventListener('DOMContentLoaded', function(){
+  showView('overview');
+  fetchSheets();
+  setInterval(fetchSheets, 5*60*1000);
+  if(isMarketOpen()) wsConnect();
+  setInterval(function(){
+    if(isMarketOpen()&&!wsConnected) wsConnect();
+    if(!isMarketOpen()&&ws&&ws.readyState===1) ws.close();
+  }, 60000);
+});
 </script>
 </body>
 </html>
