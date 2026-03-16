@@ -161,7 +161,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
 </div>
 
 <div class="nav-tabs">
-  <div class="nav-tab" onclick="showView('overview')">الكل</div>
+  <div class="nav-tab active" onclick="showView('overview')">الكل</div>
   <div class="nav-tab" onclick="showView('chart')">الشارت</div>
   <div class="nav-tab" onclick="showView('indicators')">المؤشرات</div>
   <div class="nav-tab" onclick="showView('flow')">Option Flow</div>
@@ -179,7 +179,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
   </div>
 </div>
 
-<div id="view-overview" class="overview-panel">
+<div id="view-overview" class="overview-panel" style="display:flex">
   <div class="loading"><div class="spinner"></div>جاري سحب البيانات...</div>
 </div>
 
@@ -442,10 +442,8 @@ async function fetchSheets(){try{const res=await fetch(CSV_URL);const text=await
   document.getElementById('update-badge').innerHTML='آخر تحديث: <b>'+last.slice(11,16)+'</b>';
   buildToolbar();
   buildIndicatorSelects();
-  // أول تحميل — اعرض الكل تلقائياً
-  if(currentView==='overview'||!document.querySelector('.nav-tab.active')){
-    showView('overview');
-  } else if(currentView==='chart'&&selectedTicker&&!chartLoaded) loadChart(selectedTicker);
+  if(currentView==='overview') renderOverview();
+  else if(currentView==='chart'&&selectedTicker&&!chartLoaded) loadChart(selectedTicker);
   else if(currentView==='chart'&&selectedTicker) renderSidebar(selectedTicker);
   else if(currentView==='indicators') renderAllIndicators();}catch(e){document.getElementById('update-badge').textContent='خطأ في التحميل';}}
 
