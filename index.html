@@ -494,17 +494,13 @@ function renderSidebar(ticker){
     el.innerHTML='<div class="sb-title">أفضل العقود المقترحة ⭐</div>'+
       contracts.map(c=>{
         const isCall=c.type==='CALL';
-        return`<div class="contract ${isCall?'call':''}" style="margin-bottom:4px">
-          <div>
-            <div class="ct-type">${c.type}</div>
-            <div class="ct-strike">${c.strike}</div>
-          </div>
-          <div class="ct-info" style="text-align:right">
-            <div>${c.exp}</div>
-            <div style="color:#aaa">OI: ${Number(c.oi).toLocaleString()}</div>
-            <div style="color:#555">Δ ${c.delta}</div>
-          </div>
-        </div>`;
+        return '<div class="contract '+(isCall?'call':'')+'" style="margin-bottom:4px">'
+          +'<div><div class="ct-type">'+c.type+'</div><div class="ct-strike">'+c.strike+'</div></div>'
+          +'<div class="ct-info" style="text-align:right">'
+          +'<div>'+c.exp+'</div>'
+          +'<div style="color:#aaa">OI: '+Number(c.oi).toLocaleString()+'</div>'
+          +'<div style="color:#555">\u0394 '+c.delta+'</div>'
+          +'</div></div>';
       }).join('');
   });
 }
@@ -524,7 +520,7 @@ function onSearch(val){
   const q=val.toUpperCase();
   const matches=allData.filter(d=>d.ticker.startsWith(q)||d.ticker.includes(q)).slice(0,8);
   if(!matches.length){drop.style.display='none';return;}
-  drop.innerHTML=matches.map(d=>`<div class="search-drop-item" onmousedown="pickSearch('${d.ticker}')">${d.ticker} <span style="color:#555;font-size:10px">${d.spot}</span></div>`).join('');
+  drop.innerHTML=matches.map(function(d){return '<div class="search-drop-item" onmousedown="pickSearch(\''+d.ticker+'\')">'+d.ticker+' <span style="color:#555;font-size:10px">'+d.spot+'</span></div>';}).join('');
   drop.style.display='block';
 }
 function pickSearch(ticker){
@@ -547,26 +543,24 @@ function renderGammaCard(){
   const sorted=[...pairs].sort((a,b)=>a.strike-b.strike);
   const maxAbs=Math.max(...sorted.map(p=>Math.abs(p.gex)));
   const chartH=130;
-  let html=`<div style="font-size:10px;color:#555;margin-bottom:6px">السعر: <span style="color:#4da6ff;font-weight:600">${d.spot}</span></div>`;
-  html+=`<div style="display:flex;align-items:stretch;gap:1px;overflow-x:auto;padding-bottom:24px;min-height:${chartH*2+2}px;position:relative">`;
-  sorted.forEach(p=>{
-    const pct=Math.min(1,Math.abs(p.gex)/maxAbs);
-    const barH=Math.max(2,Math.round(pct*chartH));
-    const isSpot=Math.abs(p.strike-d.spot)<(d.callWall-d.putWall)*0.025;
-    const col=isSpot?'#4da6ff':p.gex>=0?'#00CC44':'#FF4444';
-    const lbl=p.strike>=1000?(p.strike/100).toFixed(0)+'h':String(p.strike);
-    html+=`<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:20px">
-      <div style="height:${chartH}px;display:flex;align-items:flex-end">
-        ${p.gex>=0?`<div style="height:${barH}px;width:14px;background:${col};border-radius:2px 2px 0 0;opacity:${isSpot?1:0.85}"></div>`:'<div style="width:14px"></div>'}
-      </div>
-      <div style="height:1px;width:20px;background:#2a2a2a"></div>
-      <div style="height:${chartH}px;display:flex;align-items:flex-start">
-        ${p.gex<0?`<div style="height:${barH}px;width:14px;background:${col};border-radius:0 0 2px 2px;opacity:${isSpot?1:0.85}"></div>`:'<div style="width:14px"></div>'}
-      </div>
-      <div style="font-size:7px;color:${isSpot?'#4da6ff':'#333'};transform:rotate(-45deg);margin-top:2px;width:20px;text-align:center">${lbl}</div>
-    </div>`;
+  let html='<div style="font-size:10px;color:#555;margin-bottom:6px">السعر: <span style="color:#4da6ff;font-weight:600">'+d.spot+'</span></div>';
+  html+='<div style="display:flex;align-items:stretch;gap:1px;overflow-x:auto;padding-bottom:24px;min-height:'+(chartH*2+2)+'px">';
+  sorted.forEach(function(p){
+    var pct=Math.min(1,Math.abs(p.gex)/maxAbs);
+    var barH=Math.max(2,Math.round(pct*chartH));
+    var isSpot=Math.abs(p.strike-d.spot)<(d.callWall-d.putWall)*0.025;
+    var col=isSpot?'#4da6ff':p.gex>=0?'#00CC44':'#FF4444';
+    var lbl=p.strike>=1000?Math.round(p.strike)+'':String(p.strike);
+    var upBar=p.gex>=0?'<div style="height:'+barH+'px;width:14px;background:'+col+';border-radius:2px 2px 0 0"></div>':'<div style="width:14px"></div>';
+    var dnBar=p.gex<0?'<div style="height:'+barH+'px;width:14px;background:'+col+';border-radius:0 0 2px 2px"></div>':'<div style="width:14px"></div>';
+    html+='<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:20px">'
+      +'<div style="height:'+chartH+'px;display:flex;align-items:flex-end">'+upBar+'</div>'
+      +'<div style="height:1px;width:20px;background:#2a2a2a"></div>'
+      +'<div style="height:'+chartH+'px;display:flex;align-items:flex-start">'+dnBar+'</div>'
+      +'<div style="font-size:7px;color:'+(isSpot?'#4da6ff':'#333')+';transform:rotate(-45deg);margin-top:2px;width:20px;text-align:center">'+lbl+'</div>'
+      +'</div>';
   });
-  html+=`</div><div style="display:flex;gap:12px;font-size:10px;margin-top:4px"><span style="color:#00CC44">▲ Call GEX</span><span style="color:#FF4444">▼ Put GEX</span><span style="color:#4da6ff">◉ السعر</span></div>`;
+  html+='</div><div style="display:flex;gap:12px;font-size:10px;margin-top:4px"><span style="color:#00CC44">▲ Call GEX</span><span style="color:#FF4444">▼ Put GEX</span><span style="color:#4da6ff">◉ السعر</span></div>';
   el.innerHTML=html;
 }
 
@@ -634,28 +628,24 @@ function renderFlow(){
   }).slice(0,100);
   const el=document.getElementById('flow-list');
   if(!list.length){
-    el.innerHTML=`<div class="flow-empty">${flowConnected?'⏳ في انتظار صفقات كبيرة (+$50K)...':`<div><div style="margin-bottom:12px">اضغط لبدء Option Flow</div><button onclick="startFlow()" style="padding:8px 20px;background:#FFA500;border:none;border-radius:6px;color:#000;font-weight:700;cursor:pointer;font-size:12px">⬤ Connect</button></div>`}</div>`;
+    var connectBtn='<div><div style="margin-bottom:12px">اضغط لبدء Option Flow</div><button onclick="startFlow()" style="padding:8px 20px;background:#FFA500;border:none;border-radius:6px;color:#000;font-weight:700;cursor:pointer;font-size:12px">&#9899; Connect</button></div>';
+    el.innerHTML='<div class="flow-empty">'+(flowConnected?'&#9203; في انتظار صفقات كبيرة (+$50K)...':connectBtn)+'</div>';
     return;
   }
-  el.innerHTML=list.map(i=>{
-    const prem=i.premium>=1000000?'$'+(i.premium/1000000).toFixed(1)+'M':'$'+(i.premium/1000).toFixed(0)+'K';
-    const isGiant=i.premium>=500000;
-    return`<div class="flow-item flow-${i.type}" style="${isGiant?'border-width:3px;background:#161616':''}">
-      <div style="display:flex;align-items:center;gap:10px">
-        <span class="flow-type">${i.type.toUpperCase()}</span>
-        <div>
-          <div style="display:flex;align-items:baseline;gap:6px">
-            <span style="font-size:13px;font-weight:700;color:#fff">${i.ticker}</span>
-            <span class="flow-strike">${i.strike}</span>
-            <span style="font-size:10px;color:#555">${i.exp}</span>
-          </div>
-          <div style="font-size:10px;color:#555">${i.time} · ${i.size.toLocaleString()} عقد · $${i.price.toFixed(2)}</div>
-        </div>
-      </div>
-      <div style="text-align:left">
-        <div class="flow-premium" style="${isGiant?'font-size:14px':''}">${prem}${isGiant?' 🔥':''}</div>
-      </div>
-    </div>`;
+  el.innerHTML=list.map(function(i){
+    var prem=i.premium>=1000000?'$'+(i.premium/1000000).toFixed(1)+'M':'$'+(i.premium/1000).toFixed(0)+'K';
+    var isGiant=i.premium>=500000;
+    return '<div class="flow-item flow-'+i.type+'" style="'+(isGiant?'border-width:3px;background:#161616':'')+'">'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<span class="flow-type">'+i.type.toUpperCase()+'</span>'
+      +'<div><div style="display:flex;align-items:baseline;gap:6px">'
+      +'<span style="font-size:13px;font-weight:700;color:#fff">'+i.ticker+'</span>'
+      +'<span class="flow-strike">'+i.strike+'</span>'
+      +'<span style="font-size:10px;color:#555">'+i.exp+'</span>'
+      +'</div><div style="font-size:10px;color:#555">'+i.time+' &middot; '+i.size.toLocaleString()+' عقد &middot; $'+i.price.toFixed(2)+'</div>'
+      +'</div></div>'
+      +'<div style="text-align:left"><div class="flow-premium" style="'+(isGiant?'font-size:14px':'')+'">'+prem+(isGiant?' &#128293;':'')+'</div></div>'
+      +'</div>';
   }).join('');
 }
 
