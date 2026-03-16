@@ -8,22 +8,17 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
 body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#fff;display:flex;flex-direction:column}
-
 .header{background:#0d0d0d;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid #1e1e1e;flex-shrink:0}
 .logo{font-size:18px;font-weight:700;color:#fff}.logo span{color:#FFA500}
 .badge{background:#111;border:0.5px solid #222;border-radius:6px;padding:5px 12px;font-size:12px;color:#666}
 .badge b{color:#00CC44}
 .dot{width:7px;height:7px;border-radius:50%;background:#00CC44;display:inline-block;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
 .tabs{display:flex;gap:4px;padding:8px 16px;background:#0d0d0d;border-bottom:0.5px solid #1e1e1e;overflow-x:auto;flex-shrink:0}
 .tabs::-webkit-scrollbar{height:2px}.tabs::-webkit-scrollbar-thumb{background:#222}
 .tab{padding:6px 14px;border-radius:7px;font-size:13px;color:#555;border:0.5px solid transparent;cursor:pointer;white-space:nowrap;transition:all .15s;font-weight:500}
 .tab:hover{color:#aaa}.tab.active{background:#1a1a1a;color:#fff;border-color:#2a2a2a}
-
 .layout{display:flex;flex:1;overflow:hidden}
-
-/* ── Chart ── */
 .chart-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .chart-top{padding:12px 16px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:0.5px solid #1a1a1a;background:#0d0d0d}
 .ct-left{display:flex;flex-direction:column;gap:3px}
@@ -39,15 +34,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
 .leg{display:flex;align-items:center;gap:5px;font-size:11px;color:#555}
 .leg-line{width:20px;height:2px;border-radius:1px}
 .leg-dash{width:20px;border-top:2px dashed}
-
-/* ── Sidebar ── */
 .sidebar{width:260px;border-right:0.5px solid #1e1e1e;background:#0d0d0d;display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
 .sb-section{padding:14px 14px 8px;border-bottom:0.5px solid #141414}
 .sb-title{font-size:11px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:600}
 .lv-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#111;border-radius:8px;margin-bottom:4px;border-right:2px solid transparent}
 .lv-cw{border-right-color:#FF4444}.lv-pw{border-right-color:#00CC44}.lv-zg{border-right-color:#555}.lv-hvl{border-right-color:#4da6ff}
-.lv-label{font-size:12px;color:#666}
-.lv-val{font-size:14px;font-weight:600}
+.lv-label{font-size:12px;color:#666}.lv-val{font-size:14px;font-weight:600}
 .vc-cw{color:#FF4444}.vc-pw{color:#00CC44}.vc-zg{color:#aaa}.vc-hvl{color:#4da6ff}
 .gex-pills{display:flex;flex-wrap:wrap;gap:4px}
 .gp{font-size:11px;padding:3px 8px;border-radius:5px;font-weight:600}
@@ -63,10 +55,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
 .stat-box{background:#111;border-radius:8px;overflow:hidden}
 .stat-row{display:flex;justify-content:space-between;padding:8px 11px;border-bottom:0.5px solid #1a1a1a}
 .stat-row:last-child{border-bottom:none}
-.sl{font-size:12px;color:#555}
-.sv{font-size:12px;font-weight:600}
-
-/* ── Overview ── */
+.sl{font-size:12px;color:#555}.sv{font-size:12px;font-weight:600}
 .overview-panel{flex:1;overflow-y:auto;padding:16px}
 .ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
 .ov-card{background:#111;border:0.5px solid #1e1e1e;border-radius:12px;padding:13px 14px;cursor:pointer;transition:border-color .15s}
@@ -76,8 +65,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
 .ov-price{font-size:12px;color:#555}
 .ov-levels{display:flex;flex-direction:column;gap:4px;margin:8px 0}
 .ov-lrow{display:flex;justify-content:space-between}
-.ov-ll{font-size:11px;color:#444}
-.ov-lv{font-size:11px;font-weight:600}
+.ov-ll{font-size:11px;color:#444}.ov-lv{font-size:11px;font-weight:600}
 .ov-bar{height:3px;background:#1a1a1a;border-radius:2px;position:relative;margin:5px 0}
 .ov-spot{position:absolute;top:-3px;width:3px;height:9px;background:#4da6ff;border-radius:1px}
 .ov-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
@@ -85,14 +73,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
 .ob-bull{background:#0d1f0d;color:#00CC44;border:0.5px solid #1a3a1a}
 .ob-bear{background:#1f0d0d;color:#FF4444;border:0.5px solid #3a1a1a}
 .ov-pc{font-size:11px;color:#444}
-
 .loading{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;height:100%;color:#333;font-size:14px}
 .spinner{width:32px;height:32px;border:2px solid #1a1a1a;border-top-color:#FFA500;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-
 <div class="header">
   <div class="logo">مملكة <span>التداول</span> — رصد KSA</div>
   <div style="display:flex;align-items:center;gap:10px">
@@ -100,18 +86,13 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
     <span class="dot"></span>
   </div>
 </div>
-
 <div class="tabs" id="tabs-bar">
   <div class="tab active" onclick="showView('overview')">الكل</div>
   <div class="tab" onclick="showView('chart')">الشارت</div>
 </div>
-
-<!-- Overview -->
 <div id="view-overview" class="overview-panel">
   <div class="loading"><div class="spinner"></div>جاري سحب البيانات...</div>
 </div>
-
-<!-- Chart -->
 <div id="view-chart" class="layout" style="display:none">
   <div class="sidebar" id="sidebar"></div>
   <div class="chart-panel">
@@ -138,154 +119,94 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
     </div>
   </div>
 </div>
-
 <script>
-const SHEET_ID  = '1kS31BVYSn_xEPCtsOOeebMZuOyDS3OpQaE1Sv8ZR1wU';
-const CSV_URL   = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`)}`;
+const SHEET_ID = '1kS31BVYSn_xEPCtsOOeebMZuOyDS3OpQaE1Sv8ZR1wU';
+const CSV_URL  = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv&gid=0');
 
-// Yahoo Finance ticker map
-const YF_MAP = {
-  SPX:'%5EGSPC', SPY:'SPY', QQQ:'QQQ', IWM:'IWM', GLD:'GLD', TLT:'TLT',
-  AAPL:'AAPL', MSFT:'MSFT', NVDA:'NVDA', AMZN:'AMZN', GOOGL:'GOOGL',
-  META:'META', TSLA:'TSLA', NFLX:'NFLX', AMD:'AMD', AVGO:'AVGO',
-  JPM:'JPM', BAC:'BAC', GS:'GS', V:'V', MA:'MA', UNH:'UNH', LLY:'LLY', XOM:'XOM'
-};
+let allData = [], selectedTicker = null, currentView = 'overview', currentTF = '5m';
 
-let allData = [], selectedTicker = null, currentView = 'overview';
-let currentTF = '5m';
-
-// ── جلب Sheets ──
 async function fetchSheets() {
   try {
     const res  = await fetch(CSV_URL);
     const text = await res.text();
     const rows = text.trim().split('\n').map(r => r.split(','));
-    const header = rows[0];
-
-    allData = rows.slice(1)
-      .filter(r => r[0] && r[0] !== 'Ticker' && r[1] && parseFloat(r[1]) > 0)
-      .map(r => {
-        const g = i => parseFloat(r[i]) || 0;
-        const s = i => (r[i] || '—').replace(/"/g,'').trim();
-        // العقود تحتوي فواصل — نجمع الأعمدة الزائدة
-        return {
-          ticker:    s(0),  spot:      g(1),
-          callWall:  g(2),  putWall:   g(3),
-          zeroGamma: g(4),  topGamma:  g(5),
-          dCall:     g(6),  dPut:      g(7),
-          theta:     g(8),  vega:      g(9),
-          oiCall:    g(10), oiPut:     g(11), pcRatio: g(12),
-          c1: s(13), c2: s(14), c3: s(15),
-          gl1:g(16), gl2:g(17), gl3:g(18), gl4:g(19),
-          gl5:g(20), gl6:g(21), gl7:g(22),
-          updatedAt: s(23)
-        };
-      });
-
+    allData = rows.slice(1).filter(r => r[0] && r[0] !== 'Ticker' && parseFloat(r[1]) > 0).map(r => {
+      const g = i => parseFloat(r[i]) || 0;
+      const s = i => (r[i] || '—').replace(/"/g,'').trim();
+      return {
+        ticker:s(0), spot:g(1), callWall:g(2), putWall:g(3), zeroGamma:g(4), topGamma:g(5),
+        dCall:g(6), dPut:g(7), theta:g(8), vega:g(9), oiCall:g(10), oiPut:g(11), pcRatio:g(12),
+        c1:s(13), c2:s(14), c3:s(15), gl1:g(16), gl2:g(17), gl3:g(18), gl4:g(19), gl5:g(20), gl6:g(21), gl7:g(22), updatedAt:s(23)
+      };
+    });
     const last = allData[allData.length-1]?.updatedAt || '—';
-    document.getElementById('update-badge').innerHTML = `آخر تحديث: <b>${last.slice(11,16)}</b>`;
+    document.getElementById('update-badge').innerHTML = 'آخر تحديث: <b>' + last.slice(11,16) + '</b>';
     buildTabs();
     if (currentView === 'overview') renderOverview();
     else if (selectedTicker) updateChart(selectedTicker);
   } catch(e) {
-    console.error('fetchSheets error:', e);
     document.getElementById('update-badge').textContent = 'خطأ في التحميل';
+    console.error(e);
   }
 }
 
-// ── Tabs ──
 function buildTabs() {
   const bar = document.getElementById('tabs-bar');
-  bar.innerHTML = `
-    <div class="tab ${currentView==='overview'?'active':''}" onclick="showView('overview')">الكل</div>
-    <div class="tab ${currentView==='chart'?'active':''}" onclick="showView('chart')">الشارت</div>
-    <div style="width:1px;background:#1a1a1a;margin:0 4px;flex-shrink:0"></div>`;
+  bar.innerHTML = '<div class="tab ' + (currentView==='overview'?'active':'') + '" onclick="showView(\'overview\')">الكل</div><div class="tab ' + (currentView==='chart'?'active':'') + '" onclick="showView(\'chart\')">الشارت</div><div style="width:1px;background:#1a1a1a;margin:0 4px;flex-shrink:0"></div>';
   allData.forEach(d => {
     const div = document.createElement('div');
-    div.className = `tab ${selectedTicker===d.ticker?'active':''}`;
+    div.className = 'tab ' + (selectedTicker===d.ticker?'active':'');
     div.textContent = d.ticker;
     div.onclick = () => selectTicker(d.ticker);
     bar.appendChild(div);
   });
 }
 
-// ── Overview ──
 function renderOverview() {
   const panel = document.getElementById('view-overview');
   if (!allData.length) return;
-  panel.innerHTML = `<div style="font-size:11px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">${allData.length} رمز</div><div class="ov-grid" id="ov-grid"></div>`;
+  panel.innerHTML = '<div style="font-size:11px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">' + allData.length + ' رمز</div><div class="ov-grid" id="ov-grid"></div>';
   const grid = document.getElementById('ov-grid');
   allData.forEach(d => {
     const range = d.callWall - d.putWall;
     const pct = range > 0 ? Math.max(2, Math.min(97, ((d.spot-d.putWall)/range)*100)) : 50;
     const bull = d.spot >= d.zeroGamma;
     const card = document.createElement('div');
-    card.className = `ov-card ${selectedTicker===d.ticker?'sel':''}`;
+    card.className = 'ov-card ' + (selectedTicker===d.ticker?'sel':'');
     card.onclick = () => selectTicker(d.ticker);
-    card.innerHTML = `
-      <div class="ov-top"><span class="ov-ticker">${d.ticker}</span><span class="ov-price">${d.spot.toLocaleString()}</span></div>
-      <div class="ov-levels">
-        <div class="ov-lrow"><span class="ov-ll">Call Wall</span><span class="ov-lv vc-cw">${d.callWall}</span></div>
-        <div class="ov-bar"><div class="ov-spot" style="left:${pct.toFixed(1)}%"></div></div>
-        <div class="ov-lrow"><span class="ov-ll">Zero Gamma</span><span class="ov-lv vc-zg">${d.zeroGamma}</span></div>
-        <div class="ov-lrow"><span class="ov-ll">Put Wall</span><span class="ov-lv vc-pw">${d.putWall}</span></div>
-      </div>
-      <div class="ov-footer">
-        <span class="ov-badge ${bull?'ob-bull':'ob-bear'}">${bull?'إيجابي':'سلبي'}</span>
-        <span class="ov-pc">P/C ${d.pcRatio}</span>
-      </div>`;
+    card.innerHTML = '<div class="ov-top"><span class="ov-ticker">' + d.ticker + '</span><span class="ov-price">' + d.spot.toLocaleString() + '</span></div><div class="ov-levels"><div class="ov-lrow"><span class="ov-ll">Call Wall</span><span class="ov-lv vc-cw">' + d.callWall + '</span></div><div class="ov-bar"><div class="ov-spot" style="left:' + pct.toFixed(1) + '%"></div></div><div class="ov-lrow"><span class="ov-ll">Zero Gamma</span><span class="ov-lv vc-zg">' + d.zeroGamma + '</span></div><div class="ov-lrow"><span class="ov-ll">Put Wall</span><span class="ov-lv vc-pw">' + d.putWall + '</span></div></div><div class="ov-footer"><span class="ov-badge ' + (bull?'ob-bull':'ob-bear') + '">' + (bull?'إيجابي':'سلبي') + '</span><span class="ov-pc">P/C ' + d.pcRatio + '</span></div>';
     grid.appendChild(card);
   });
 }
 
-// ── Sidebar ──
 function renderSidebar(ticker) {
   const d = allData.find(x => x.ticker===ticker);
   if (!d) return;
   const gexs = [d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(g=>g>0);
-  const pills = gexs.map(g=>{
-    const cls = g>d.callWall?'g-grn':g>=d.zeroGamma?'g-pur':'g-red';
-    return `<span class="gp ${cls}">${g}</span>`;
-  }).join('');
+  const pills = gexs.map(g => '<span class="gp ' + (g>d.callWall?'g-grn':g>=d.zeroGamma?'g-pur':'g-red') + '">' + g + '</span>').join('');
   const cHTML = str => {
     if(!str||str==='—') return '';
-    const p=str.split(' ');
-    const isCall=p[1]==='CALL';
-    return `<div class="contract ${isCall?'call':''}">
-      <div><div class="ct-type">${p[1]}</div><div class="ct-strike">${p[0]}</div></div>
-      <div class="ct-info">${p[2]||''}<br>${p[4]||''}</div>
-    </div>`;
+    const p = str.split(' ');
+    const isCall = p[1]==='CALL';
+    return '<div class="contract ' + (isCall?'call':'') + '"><div><div class="ct-type">' + p[1] + '</div><div class="ct-strike">' + p[0] + '</div></div><div class="ct-info">' + (p[2]||'') + '<br>' + (p[4]||'') + '</div></div>';
   };
-  document.getElementById('sidebar').innerHTML = `
-    <div class="sb-section">
-      <div class="sb-title">${ticker} — المستويات</div>
-      <div class="lv-item lv-cw"><span class="lv-label">مقاومة الكول</span><span class="lv-val vc-cw">${d.callWall}</span></div>
-      <div class="lv-item lv-hvl"><span class="lv-label">الأعلى سيولة</span><span class="lv-val vc-hvl">${d.topGamma}</span></div>
-      <div class="lv-item lv-zg"><span class="lv-label">نقطة التحول</span><span class="lv-val vc-zg">${d.zeroGamma}</span></div>
-      <div class="lv-item lv-pw"><span class="lv-label">دعم البوت</span><span class="lv-val vc-pw">${d.putWall}</span></div>
-    </div>
-    <div class="sb-section">
-      <div class="sb-title">مستويات GEX</div>
-      <div class="gex-pills">${pills}</div>
-    </div>
-    <div class="sb-section">
-      <div class="sb-title">أفضل العقود</div>
-      ${cHTML(d.c1)}${cHTML(d.c2)}${cHTML(d.c3)}
-    </div>
-    <div class="sb-section">
-      <div class="sb-title">الإحصائيات</div>
-      <div class="stat-box">
-        <div class="stat-row"><span class="sl">OI Call</span><span class="sv" style="color:#00CC44">${Number(d.oiCall).toLocaleString()}</span></div>
-        <div class="stat-row"><span class="sl">OI Put</span><span class="sv" style="color:#FF4444">${Number(d.oiPut).toLocaleString()}</span></div>
-        <div class="stat-row"><span class="sl">P/C Ratio</span><span class="sv">${d.pcRatio}</span></div>
-        <div class="stat-row"><span class="sl">Delta Call</span><span class="sv" style="color:#00CC44">${d.dCall}M$</span></div>
-        <div class="stat-row"><span class="sl">Delta Put</span><span class="sv" style="color:#FF4444">${d.dPut}M$</span></div>
-        <div class="stat-row"><span class="sl">Vega</span><span class="sv">${d.vega}M$</span></div>
-      </div>
-    </div>`;
+  document.getElementById('sidebar').innerHTML =
+    '<div class="sb-section"><div class="sb-title">' + ticker + ' — المستويات</div>' +
+    '<div class="lv-item lv-cw"><span class="lv-label">مقاومة الكول</span><span class="lv-val vc-cw">' + d.callWall + '</span></div>' +
+    '<div class="lv-item lv-hvl"><span class="lv-label">الأعلى سيولة</span><span class="lv-val vc-hvl">' + d.topGamma + '</span></div>' +
+    '<div class="lv-item lv-zg"><span class="lv-label">نقطة التحول</span><span class="lv-val vc-zg">' + d.zeroGamma + '</span></div>' +
+    '<div class="lv-item lv-pw"><span class="lv-label">دعم البوت</span><span class="lv-val vc-pw">' + d.putWall + '</span></div></div>' +
+    '<div class="sb-section"><div class="sb-title">مستويات GEX</div><div class="gex-pills">' + pills + '</div></div>' +
+    '<div class="sb-section"><div class="sb-title">أفضل العقود</div>' + cHTML(d.c1) + cHTML(d.c2) + cHTML(d.c3) + '</div>' +
+    '<div class="sb-section"><div class="sb-title">الإحصائيات</div><div class="stat-box">' +
+    '<div class="stat-row"><span class="sl">OI Call</span><span class="sv" style="color:#00CC44">' + Number(d.oiCall).toLocaleString() + '</span></div>' +
+    '<div class="stat-row"><span class="sl">OI Put</span><span class="sv" style="color:#FF4444">' + Number(d.oiPut).toLocaleString() + '</span></div>' +
+    '<div class="stat-row"><span class="sl">P/C Ratio</span><span class="sv">' + d.pcRatio + '</span></div>' +
+    '<div class="stat-row"><span class="sl">Delta Call</span><span class="sv" style="color:#00CC44">' + d.dCall + 'M$</span></div>' +
+    '<div class="stat-row"><span class="sl">Delta Put</span><span class="sv" style="color:#FF4444">' + d.dPut + 'M$</span></div>' +
+    '<div class="stat-row"><span class="sl">Vega</span><span class="sv">' + d.vega + 'M$</span></div></div></div>';
 }
 
-// ── Chart ──
 function setTF(el, tf) {
   document.querySelectorAll('.tf').forEach(e => e.classList.remove('active'));
   el.classList.add('active');
@@ -293,43 +214,18 @@ function setTF(el, tf) {
   if (selectedTicker) updateChart(selectedTicker);
 }
 
-async function updateChart(ticker) {
+function updateChart(ticker) {
   const d = allData.find(x => x.ticker===ticker);
   if (!d) return;
   document.getElementById('chart-name').textContent = ticker;
   document.getElementById('chart-price').textContent = d.spot.toLocaleString();
-  document.getElementById('chart-chg').innerHTML = '';
   renderSidebar(ticker);
-
-  const tvMap = {
-    SPX:'SP:SPX', SPY:'AMEX:SPY', QQQ:'NASDAQ:QQQ', IWM:'AMEX:IWM',
-    GLD:'AMEX:GLD', TLT:'NASDAQ:TLT', AAPL:'NASDAQ:AAPL', MSFT:'NASDAQ:MSFT',
-    NVDA:'NASDAQ:NVDA', AMZN:'NASDAQ:AMZN', GOOGL:'NASDAQ:GOOGL',
-    META:'NASDAQ:META', TSLA:'NASDAQ:TSLA', NFLX:'NASDAQ:NFLX',
-    AMD:'NASDAQ:AMD', AVGO:'NASDAQ:AVGO', JPM:'NYSE:JPM', BAC:'NYSE:BAC',
-    GS:'NYSE:GS', V:'NYSE:V', MA:'NYSE:MA', UNH:'NYSE:UNH',
-    LLY:'NYSE:LLY', XOM:'NYSE:XOM'
-  };
-
+  const tvMap = {SPX:'SP:SPX',SPY:'AMEX:SPY',QQQ:'NASDAQ:QQQ',IWM:'AMEX:IWM',GLD:'AMEX:GLD',TLT:'NASDAQ:TLT',AAPL:'NASDAQ:AAPL',MSFT:'NASDAQ:MSFT',NVDA:'NASDAQ:NVDA',AMZN:'NASDAQ:AMZN',GOOGL:'NASDAQ:GOOGL',META:'NASDAQ:META',TSLA:'NASDAQ:TSLA',NFLX:'NASDAQ:NFLX',AMD:'NASDAQ:AMD',AVGO:'NASDAQ:AVGO',JPM:'NYSE:JPM',BAC:'NYSE:BAC',GS:'NYSE:GS',V:'NYSE:V',MA:'NYSE:MA',UNH:'NYSE:UNH',LLY:'NYSE:LLY',XOM:'NYSE:XOM'};
   const tvTicker = encodeURIComponent(tvMap[ticker] || ticker);
-  const tfMap    = {'5m':'5','15m':'15','1h':'60','1d':'D'};
+  const tfMap = {'5m':'5','15m':'15','1h':'60','1d':'D'};
   const interval = tfMap[currentTF] || 'D';
   const container = document.getElementById('chart-container');
-
-  container.innerHTML = `<iframe
-    src="https://www.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${tvTicker}&interval=${interval}&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=1&saveimage=0&toolbarbg=0a0a0a&studies=[]&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&locale=ar"
-    style="width:100%;height:100%;border:none"
-    allowtransparency="true"
-    scrolling="no"
-    allowfullscreen>
-  </iframe>`;
-}
-
-function setTF(el, tf) {
-  document.querySelectorAll('.tf').forEach(e => e.classList.remove('active'));
-  el.classList.add('active');
-  currentTF = tf;
-  if (selectedTicker) updateChart(selectedTicker);
+  container.innerHTML = '<iframe src="https://www.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=' + tvTicker + '&interval=' + interval + '&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=1&saveimage=0&toolbarbg=0a0a0a&studies=[]&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&locale=ar" style="width:100%;height:100%;border:none" allowtransparency="true" scrolling="no" allowfullscreen></iframe>';
 }
 
 function selectTicker(ticker) {
@@ -344,16 +240,10 @@ function showView(view) {
   document.getElementById('view-chart').style.display    = view==='chart'?'flex':'none';
   buildTabs();
   if (view==='overview') renderOverview();
-  else {
-    const t = selectedTicker || allData[0]?.ticker;
-    if (t) { selectedTicker=t; updateChart(t); }
-  }
+  else { const t = selectedTicker || allData[0]?.ticker; if(t){selectedTicker=t;updateChart(t);} }
 }
 
-// ── Init ──
-(async () => {
-  await fetchSheets();
-})();
+fetchSheets();
 setInterval(fetchSheets, 5*60*1000);
 </script>
 </body>
