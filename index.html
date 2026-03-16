@@ -316,8 +316,22 @@ function renderPCCard(){const t=document.getElementById('sel-pc').value;const d=
 
 function renderAllIndicators(){renderGammaCard();renderPressureCard();renderDeltaCard();renderPCCard();}
 
+// ── Rate limiter بسيط ──
+let lastFetchTime=0;
+async function rateLimitedFetch(url){
+  const now=Date.now();
+  const diff=now-lastFetchTime;
+  if(diff<500)await new Promise(r=>setTimeout(r,500-diff));
+  lastFetchTime=Date.now();
+  return fetch(url);
+}
+
 async function fetchCandles(ticker,tf){
-  const sym=POLY_MAP[ticker]||ticker;
+  // SPX لا يدعمه الاشتراك المجاني — نستخدم SPY ونضرب ×10
+  let sym=POLY_MAP[ticker]||ticker;
+  let multiplier=1;
+  if(ticker==='SPX'){sym='SPY';multiplier=10;}
+
   const now=new Date();
   const from=new Date(now);
   if(tf==='D')from.setMonth(from.getMonth()-6);
@@ -331,18 +345,19 @@ async function fetchCandles(ticker,tf){
   const span=tf==='D'?'day':'minute';
   const url='https://api.polygon.io/v2/aggs/ticker/'+encodeURIComponent(sym)+'/range/'+mult+'/'+span+'/'+fromStr+'/'+toStr+'?adjusted=true&sort=asc&limit=5000&apiKey='+POLY_KEY;
   try{
-    const res=await fetch(url);
+    const res=await rateLimitedFetch(url);
+    if(res.status===429){
+      console.warn('[fetchCandles] 429 rate limit — انتظار 2 ثانية...');
+      await new Promise(r=>setTimeout(r,2000));
+      const res2=await fetch(url);
+      const data2=await res2.json();
+      if(!data2.results?.length)return[];
+      return data2.results.map(b=>({time:b.t/1000,open:+(b.o*multiplier).toFixed(2),high:+(b.h*multiplier).toFixed(2),low:+(b.l*multiplier).toFixed(2),close:+(b.c*multiplier).toFixed(2)}));
+    }
     const data=await res.json();
-    console.log('[fetchCandles] '+ticker+' status='+data.status+' count='+(data.resultsCount||0)+' results='+(data.results?.length||0));
-    if(data.status==='ERROR'||data.status==='NOT_AUTHORIZED'){
-      document.getElementById('chart-chg').innerHTML='<span style="color:#FF4444;font-size:11px">API: '+data.message+'</span>';
-      return[];
-    }
-    if(!data.results||data.results.length===0){
-      console.warn('[fetchCandles] لا بيانات — '+JSON.stringify(data).slice(0,200));
-      return[];
-    }
-    return data.results.map(b=>({time:b.t/1000,open:+b.o.toFixed(2),high:+b.h.toFixed(2),low:+b.l.toFixed(2),close:+b.c.toFixed(2)}));
+    console.log('[fetchCandles] '+ticker+' status='+data.status+' results='+(data.results?.length||0));
+    if(!data.results?.length)return[];
+    return data.results.map(b=>({time:b.t/1000,open:+(b.o*multiplier).toFixed(2),high:+(b.h*multiplier).toFixed(2),low:+(b.l*multiplier).toFixed(2),close:+(b.c*multiplier).toFixed(2)}));
   }catch(e){
     console.error('[fetchCandles] خطأ:',e);
     return[];
@@ -351,10 +366,7 @@ async function fetchCandles(ticker,tf){
 
 function drawLevels(d){if(!candleSeries)return;const mainLines=[{price:d.callWall,color:'#FF4444',width:2,style:0,title:'CW '+d.callWall},{price:d.putWall,color:'#00CC44',width:2,style:0,title:'PW '+d.putWall},{price:d.zeroGamma,color:'#666666',width:1,style:1,title:'ZG '+d.zeroGamma},{price:d.topGamma,color:'#4da6ff',width:1,style:0,title:'HVL '+d.topGamma}];mainLines.forEach(l=>{try{candleSeries.createPriceLine({price:l.price,color:l.color,lineWidth:l.width,lineStyle:l.style,axisLabelVisible:true,title:l.title});}catch(e){}});if(d.intradayRaw&&d.intradayRaw!=='—'&&d.intradayRaw.length>5){const mainPrices=new Set([d.callWall,d.putWall,d.zeroGamma,d.topGamma]);d.intradayRaw.split(',').forEach(pair=>{const parts=pair.split(':');if(parts.length!==2)return;const strike=parseFloat(parts[0]);const gex=parseFloat(parts[1]);if(!strike||isNaN(gex))return;if(mainPrices.has(strike))return;const col=gex>0?'#00AA33':'#CC2222';const lbl=(gex>0?'+':'')+Math.round(gex/1000)+'K';try{candleSeries.createPriceLine({price:strike,color:col,lineWidth:1,lineStyle:2,axisLabelVisible:true,title:lbl});}catch(e){}});}else{const gexs=[d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(g=>g>0);gexs.forEach(g=>{if(Math.abs(g-d.callWall)>0.5&&Math.abs(g-d.putWall)>0.5&&Math.abs(g-d.zeroGamma)>0.5)try{candleSeries.createPriceLine({price:g,color:'#FFA500',lineWidth:1,lineStyle:2,axisLabelVisible:true,title:String(g)});}catch(e){}});}}
 
-async function loadChart(ticker){const d=allData.find(x=>x.ticker===ticker);if(!d)return;document.getElementById('chart-name').textContent=ticker;document.getElementById('chart-price').textContent=d.spot.toLocaleString();document.getElementById('chart-chg').textContent='';renderSidebar(ticker);initChart();try{let candles=await fetchCandles(ticker,currentTF);
-// إذا ما في بيانات اليوم، ارجع لآخر 10 أيام
-if(candles.length===0){const sym=POLY_MAP[ticker]||ticker;const now=new Date();const from=new Date(now);from.setDate(from.getDate()-10);const toDate=new Date(now);toDate.setDate(toDate.getDate()+1);const mult=currentTF==='D'?1:parseInt(currentTF)||5;const span=currentTF==='D'?'day':'minute';const url='https://api.polygon.io/v2/aggs/ticker/'+encodeURIComponent(sym)+'/range/'+mult+'/'+span+'/'+from.toISOString().slice(0,10)+'/'+toDate.toISOString().slice(0,10)+'?adjusted=true&sort=asc&limit=5000&apiKey='+POLY_KEY;const res=await fetch(url);const data=await res.json();candles=(data.results||[]).map(b=>({time:b.t/1000,open:+b.o.toFixed(2),high:+b.h.toFixed(2),low:+b.l.toFixed(2),close:+b.c.toFixed(2)}));}
-if(candles.length===0){document.getElementById('chart-chg').innerHTML='<span style="color:#666;font-size:11px">لا توجد بيانات متاحة</span>';return;}candleSeries.setData(candles);drawLevels(d);chart.timeScale().fitContent();chartLoaded=true;const first=candles[0],last=candles[candles.length-1];const chg=last.close-first.open;const pct=((chg/first.open)*100).toFixed(2);document.getElementById('chart-chg').innerHTML='<span class="'+(chg>=0?'chg-up':'chg-dn')+'">'+(chg>=0?'+':'')+chg.toFixed(2)+' ('+pct+'%)</span>';}catch(e){document.getElementById('chart-chg').innerHTML='<span style="color:#FF4444;font-size:11px">خطأ: '+e.message+'</span>';}}
+async function loadChart(ticker){const d=allData.find(x=>x.ticker===ticker);if(!d)return;document.getElementById('chart-name').textContent=ticker;document.getElementById('chart-price').textContent=d.spot.toLocaleString();document.getElementById('chart-chg').textContent='';renderSidebar(ticker);initChart();try{const candles=await fetchCandles(ticker,currentTF);if(candles.length===0){document.getElementById('chart-chg').innerHTML='<span style="color:#666;font-size:11px">لا توجد بيانات — جرب لاحقاً</span>';return;}candleSeries.setData(candles);drawLevels(d);chart.timeScale().fitContent();chartLoaded=true;const first=candles[0],last=candles[candles.length-1];const chg=last.close-first.open;const pct=((chg/first.open)*100).toFixed(2);document.getElementById('chart-chg').innerHTML='<span class="'+(chg>=0?'chg-up':'chg-dn')+'">'+(chg>=0?'+':'')+chg.toFixed(2)+' ('+pct+'%)</span>';}catch(e){document.getElementById('chart-chg').innerHTML='<span style="color:#FF4444;font-size:11px">خطأ: '+e.message+'</span>';}}
 
 function setTF(el,tf){document.querySelectorAll('.tf').forEach(e=>e.classList.remove('active'));el.classList.add('active');currentTF=tf;chartLoaded=false;if(selectedTicker)loadChart(selectedTicker);}
 
