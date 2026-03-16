@@ -126,6 +126,26 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
 .loading{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;flex:1;color:#333;font-size:12px}
 .spinner{width:26px;height:26px;border:2px solid #1a1a1a;border-top-color:#FFA500;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+/* ── Screener ── */
+.screener-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.filter-bar{display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px;background:#0d0d0d;border-bottom:0.5px solid #1e1e1e;flex-shrink:0;align-items:center}
+.f-btn{padding:4px 11px;border-radius:6px;font-size:11px;color:#555;border:0.5px solid #1a1a1a;cursor:pointer;white-space:nowrap;transition:all .15s;background:transparent}
+.f-btn:hover{color:#aaa;border-color:#2a2a2a}
+.f-btn.on{color:#fff;border-color:#FFA500;background:#150f00}
+.f-sep{width:1px;height:18px;background:#1a1a1a;flex-shrink:0}
+.scr-body{flex:1;overflow-y:auto}
+.scr-table{width:100%;border-collapse:collapse}
+.scr-table th{font-size:9px;color:#444;text-transform:uppercase;letter-spacing:1px;padding:7px 10px;border-bottom:0.5px solid #1a1a1a;text-align:right;font-weight:500;position:sticky;top:0;background:#0d0d0d;cursor:pointer}
+.scr-table th:hover{color:#aaa}
+.scr-table td{font-size:11px;padding:8px 10px;border-bottom:0.5px solid #0f0f0f;color:#aaa;cursor:pointer}
+.scr-table tr:hover td{background:#111}
+.scr-ticker{font-size:13px;font-weight:700;color:#fff}
+.scr-badge{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600;white-space:nowrap;display:inline-block}
+.sb-bull{background:#0d1f0d;color:#00CC44;border:0.5px solid #1a3a1a}
+.sb-bear{background:#1f0d0d;color:#FF4444;border:0.5px solid #3a1a1a}
+.sb-neu{background:#1a120d;color:#FFA500;border:0.5px solid #3a2a1a}
+.sb-blu{background:#0d1220;color:#4da6ff;border:0.5px solid #1a2a4a}
+.scr-empty{color:#444;font-size:13px;text-align:center;padding:60px;width:100%}
 </style>
 </head>
 <body>
@@ -139,9 +159,10 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
 
 <!-- Nav -->
 <div class="nav-tabs">
-  <div class="nav-tab active" onclick="showView('overview')">الكل</div>
+  <div class="nav-tab" onclick="showView('overview')">الكل</div>
   <div class="nav-tab" onclick="showView('chart')">الشارت</div>
   <div class="nav-tab" onclick="showView('indicators')">المؤشرات</div>
+  <div class="nav-tab" onclick="showView('screener')">الراصد</div>
 </div>
 
 <!-- Ticker Toolbar -->
@@ -214,7 +235,42 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
   </div>
 </div>
 
-<script>
+<div id="view-screener" style="display:none;flex:1;flex-direction:column;overflow:hidden;flex-shrink:0">
+  <div class="filter-bar">
+    <span style="font-size:10px;color:#444;margin-left:4px">الموضع:</span>
+    <button class="f-btn" data-f="above_zero" onclick="toggleFilter(this)">▲ فوق Zero Gamma</button>
+    <button class="f-btn" data-f="below_zero" onclick="toggleFilter(this)">▼ تحت Zero Gamma</button>
+    <button class="f-btn" data-f="near_put" onclick="toggleFilter(this)">🟢 قريب Put Wall</button>
+    <button class="f-btn" data-f="near_call" onclick="toggleFilter(this)">🔴 قريب Call Wall</button>
+    <button class="f-btn" data-f="below_call" onclick="toggleFilter(this)">تحت Call Wall</button>
+    <button class="f-btn" data-f="above_put" onclick="toggleFilter(this)">فوق Put Wall</button>
+    <div class="f-sep"></div>
+    <span style="font-size:10px;color:#444;margin-left:4px">GEX:</span>
+    <button class="f-btn" data-f="gex_pos" onclick="toggleFilter(this)">+ GEX إيجابي</button>
+    <button class="f-btn" data-f="gex_neg" onclick="toggleFilter(this)">- GEX سلبي</button>
+    <div class="f-sep"></div>
+    <span style="font-size:10px;color:#444;margin-left:4px">P/C:</span>
+    <button class="f-btn" data-f="pc_high" onclick="toggleFilter(this)">P/C ≥ 1.2</button>
+    <button class="f-btn" data-f="pc_low" onclick="toggleFilter(this)">P/C ≤ 0.7</button>
+    <div class="f-sep"></div>
+    <button class="f-btn" style="color:#666" onclick="clearFilters()">✕ مسح</button>
+  </div>
+  <div class="scr-body">
+    <table class="scr-table">
+      <thead><tr>
+        <th onclick="sortScr('ticker')">الرمز ↕</th>
+        <th onclick="sortScr('spot')">السعر ↕</th>
+        <th>الموضع</th>
+        <th onclick="sortScr('distCall')">↔ Call Wall%</th>
+        <th onclick="sortScr('distPut')">↔ Put Wall%</th>
+        <th onclick="sortScr('pcRatio')">P/C ↕</th>
+        <th>الوضع</th>
+      </tr></thead>
+      <tbody id="scr-body"></tbody>
+    </table>
+    <div id="scr-empty" class="scr-empty" style="display:none">لا توجد نتائج — غيّر الفلاتر</div>
+  </div>
+</div>
 const POLY_KEY = 'V7kP4H3wW_PDpOBge7jQ80G3JjUDUP0W';
 const SHEET_ID = '1kS31BVYSn_xEPCtsOOeebMZuOyDS3OpQaE1Sv8ZR1wU';
 const CSV_URL  = 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv&gid=0');
@@ -314,7 +370,75 @@ function setTF(el,tf){document.querySelectorAll('.tf').forEach(e=>e.classList.re
 
 function selectTicker(ticker){selectedTicker=ticker;chartLoaded=false;buildToolbar();if(currentView==='chart')loadChart(ticker);else if(currentView==='overview')renderOverview();}
 
-function showView(view){currentView=view;document.querySelectorAll('.nav-tab').forEach((t,i)=>{t.classList.toggle('active',['overview','chart','indicators'][i]===view);});document.getElementById('view-overview').style.display=view==='overview'?'flex':'none';document.getElementById('view-chart').style.display=view==='chart'?'flex':'none';document.getElementById('view-indicators').style.display=view==='indicators'?'flex':'none';if(view==='overview')renderOverview();else if(view==='chart'){const t=selectedTicker||allData[0]?.ticker;if(t){selectedTicker=t;loadChart(t);}}else if(view==='indicators')renderAllIndicators();}
+// ── Screener ──
+let activeFilters=new Set(),scrSort={key:'distCall',asc:true};
+
+function toggleFilter(btn){const f=btn.dataset.f;if(activeFilters.has(f)){activeFilters.delete(f);btn.classList.remove('on');}else{activeFilters.add(f);btn.classList.add('on');}renderScr();}
+function clearFilters(){activeFilters.clear();document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('on'));renderScr();}
+function sortScr(key){if(scrSort.key===key)scrSort.asc=!scrSort.asc;else{scrSort.key=key;scrSort.asc=true;}renderScr();}
+
+function renderScr(){
+  const rows=allData.map(d=>{
+    const range=(d.callWall-d.putWall)||1;
+    const distCall=+((d.callWall-d.spot)/d.spot*100).toFixed(2);
+    const distPut=+((d.spot-d.putWall)/d.spot*100).toFixed(2);
+    const pctRange=(d.spot-d.putWall)/range*100;
+    const bull=d.spot>=d.zeroGamma;
+    return{...d,distCall,distPut,pctRange,bull};
+  });
+  const filtered=rows.filter(d=>{
+    if(!activeFilters.size)return true;
+    for(const f of activeFilters){
+      if(f==='above_zero'&&d.spot<d.zeroGamma)return false;
+      if(f==='below_zero'&&d.spot>=d.zeroGamma)return false;
+      if(f==='near_put'&&d.distPut>3)return false;
+      if(f==='near_call'&&d.distCall>3)return false;
+      if(f==='below_call'&&d.spot>=d.callWall)return false;
+      if(f==='above_put'&&d.spot<=d.putWall)return false;
+      if(f==='gex_pos'&&!d.bull)return false;
+      if(f==='gex_neg'&&d.bull)return false;
+      if(f==='pc_high'&&d.pcRatio<1.2)return false;
+      if(f==='pc_low'&&d.pcRatio>0.7)return false;
+    }
+    return true;
+  });
+  filtered.sort((a,b)=>{const va=typeof a[scrSort.key]==='string'?a[scrSort.key]:+a[scrSort.key];const vb=typeof b[scrSort.key]==='string'?b[scrSort.key]:+b[scrSort.key];return scrSort.asc?(va>vb?1:-1):(va<vb?1:-1);});
+  const tbody=document.getElementById('scr-body');
+  const empty=document.getElementById('scr-empty');
+  if(!filtered.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=filtered.map(d=>{
+    const posBadge=d.pctRange>75?'<span class="scr-badge sb-bear">قريب Call Wall</span>':
+                   d.pctRange<25?'<span class="scr-badge sb-bull">قريب Put Wall</span>':
+                   d.spot>=d.zeroGamma?'<span class="scr-badge sb-neu">فوق Zero Gamma</span>':
+                   '<span class="scr-badge sb-blu">تحت Zero Gamma</span>';
+    const wBadge=d.bull?'<span class="scr-badge sb-bull">إيجابي</span>':'<span class="scr-badge sb-bear">سلبي</span>';
+    const dcCol=d.distCall<2?'#FF4444':d.distCall<5?'#FFA500':'#666';
+    const dpCol=d.distPut<2?'#00CC44':d.distPut<5?'#FFA500':'#666';
+    return'<tr onclick="selectTicker(\''+d.ticker+'\');showView(\'chart\')">'+
+      '<td><span class="scr-ticker">'+d.ticker+'</span></td>'+
+      '<td style="color:#aaa">'+d.spot.toLocaleString()+'</td>'+
+      '<td>'+posBadge+'</td>'+
+      '<td style="color:'+dcCol+'">'+d.distCall+'%</td>'+
+      '<td style="color:'+dpCol+'">'+d.distPut+'%</td>'+
+      '<td style="color:'+(d.pcRatio>=1.2?'#FF4444':d.pcRatio<=0.7?'#00CC44':'#FFA500')+'">'+d.pcRatio+'</td>'+
+      '<td>'+wBadge+'</td></tr>';
+  }).join('');}
+
+function showView(view){
+  const views=['overview','chart','indicators','screener'];
+  currentView=view;
+  document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active',views[i]===view));
+  document.getElementById('view-overview').style.display=view==='overview'?'flex':'none';
+  document.getElementById('view-chart').style.display=view==='chart'?'flex':'none';
+  document.getElementById('view-indicators').style.display=view==='indicators'?'flex':'none';
+  const sv=document.getElementById('view-screener');
+  if(sv)sv.style.display=view==='screener'?'flex':'none';
+  if(view==='overview')renderOverview();
+  else if(view==='chart'){const t=selectedTicker||allData[0]?.ticker;if(t){selectedTicker=t;loadChart(t);}}
+  else if(view==='indicators')renderAllIndicators();
+  else if(view==='screener')renderScr();
+}
 
 fetchSheets();
 setInterval(fetchSheets,5*60*1000);
