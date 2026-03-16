@@ -259,7 +259,50 @@ function buildIndicatorSelects(){['sel-gamma','sel-pressure','sel-delta','sel-pc
 
 function renderOverview(){const panel=document.getElementById('view-overview');if(!allData.length)return;panel.innerHTML='<div style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">'+allData.length+' رمز</div><div class="ov-grid" id="ov-grid"></div>';const grid=document.getElementById('ov-grid');allData.forEach(d=>{const range=d.callWall-d.putWall;const pct=range>0?Math.max(2,Math.min(97,((d.spot-d.putWall)/range)*100)):50;const bull=d.spot>=d.zeroGamma;const card=document.createElement('div');card.className='ov-card '+(selectedTicker===d.ticker?'sel':'');card.onclick=()=>selectTicker(d.ticker);card.innerHTML='<div class="ov-top"><span class="ov-ticker">'+d.ticker+'</span><span class="ov-price">'+d.spot.toLocaleString()+'</span></div><div class="ov-lrow"><span class="ov-ll">Call Wall</span><span class="ov-lv vc-cw">'+d.callWall+'</span></div><div class="ov-bar"><div class="ov-spot" style="left:'+pct.toFixed(1)+'%"></div></div><div class="ov-lrow"><span class="ov-ll">Zero Gamma</span><span class="ov-lv vc-zg">'+d.zeroGamma+'</span></div><div class="ov-lrow"><span class="ov-ll">Put Wall</span><span class="ov-lv vc-pw">'+d.putWall+'</span></div><div class="ov-footer"><span class="ov-badge '+(bull?'ob-bull':'ob-bear')+'">'+(bull?'إيجابي':'سلبي')+'</span><span class="ov-pc">P/C '+d.pcRatio+'</span></div>';grid.appendChild(card);});}
 
-function renderSidebar(ticker){const d=allData.find(x=>x.ticker===ticker);if(!d)return;const gexs=[d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(g=>g>0);const pills=gexs.map(g=>'<span class="gp '+(g>d.callWall?'g-grn':g>=d.zeroGamma?'g-pur':'g-red')+'">'+g+'</span>').join('');const cHTML=str=>{if(!str||str==='—'||str==='')return'';const parts=str.split(' '),strike=parts[0]||'',type=parts[1]||'',exp=parts[2]||'';const pi=str.indexOf('|'),oi=pi>=0?str.slice(pi+1).trim():'';return'<div class="contract '+(type==='CALL'?'call':'')+'"><div><div class="ct-type">'+type+'</div><div class="ct-strike">'+strike+'</div></div><div class="ct-info">'+exp+'<br>'+oi+'</div></div>';};document.getElementById('sidebar').innerHTML='<div class="sb-section"><div class="sb-title">'+ticker+' — المستويات</div><div class="lv-item lv-cw"><span class="lv-label">مقاومة الكول</span><span class="lv-val vc-cw">'+d.callWall+'</span></div><div class="lv-item lv-hvl"><span class="lv-label">الأعلى سيولة</span><span class="lv-val vc-hvl">'+d.topGamma+'</span></div><div class="lv-item lv-zg"><span class="lv-label">نقطة التحول</span><span class="lv-val vc-zg">'+d.zeroGamma+'</span></div><div class="lv-item lv-pw"><span class="lv-label">دعم البوت</span><span class="lv-val vc-pw">'+d.putWall+'</span></div></div><div class="sb-section"><div class="sb-title">GEX Levels</div><div class="gex-pills">'+pills+'</div></div><div class="sb-section"><div class="sb-title">أفضل العقود</div>'+cHTML(d.c1)+cHTML(d.c2)+cHTML(d.c3)+'</div><div class="sb-section"><div class="sb-title">الإحصائيات</div><div class="stat-box"><div class="stat-row"><span class="sl">OI Call</span><span class="sv" style="color:#00CC44">'+Number(d.oiCall).toLocaleString()+'</span></div><div class="stat-row"><span class="sl">OI Put</span><span class="sv" style="color:#FF4444">'+Number(d.oiPut).toLocaleString()+'</span></div><div class="stat-row"><span class="sl">P/C Ratio</span><span class="sv">'+d.pcRatio+'</span></div><div class="stat-row"><span class="sl">Delta Call</span><span class="sv" style="color:#00CC44">'+d.dCall+'M$</span></div><div class="stat-row"><span class="sl">Delta Put</span><span class="sv" style="color:#FF4444">'+d.dPut+'M$</span></div><div class="stat-row"><span class="sl">Vega</span><span class="sv">'+d.vega+'M$</span></div></div></div>';}
+function renderSidebar(ticker){
+  const d=allData.find(x=>x.ticker===ticker);if(!d)return;
+  const gexs=[d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(g=>g>0);
+  const pills=gexs.map(g=>'<span class="gp '+(g>d.callWall?'g-grn':g>=d.zeroGamma?'g-pur':'g-red')+'">'+g+'</span>').join('');
+  const cHTML=str=>{if(!str||str==='—'||str==='')return'';const parts=str.split(' '),strike=parts[0]||'',type=parts[1]||'',exp=parts[2]||'';const pi=str.indexOf('|'),oi=pi>=0?str.slice(pi+1).trim():'';return'<div class="contract '+(type==='CALL'?'call':'')+'"><div><div class="ct-type">'+type+'</div><div class="ct-strike">'+strike+'</div></div><div class="ct-info">'+exp+'<br>'+oi+'</div></div>';};
+
+  // 0DTE Pressure
+  const pairs=getGammaData(d);
+  let pressureHTML='<div style="color:#555;font-size:10px;text-align:center;padding:6px">لا توجد بيانات Intraday</div>';
+  if(pairs.length){const callSum=pairs.filter(v=>v.gex>0).reduce((a,b)=>a+b.gex,0);const putSum=Math.abs(pairs.filter(v=>v.gex<0).reduce((a,b)=>a+b.gex,0));const total=callSum+putSum;if(total){const cp=Math.round((callSum/total)*100);const pp=100-cp;const bull=cp>pp;pressureHTML='<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px"><span style="color:#00CC44">Call '+cp+'%</span><span style="color:'+(bull?'#00CC44':'#FF4444')+';font-size:9px">'+(bull?'🟢 شراء':'🔴 بيع')+'</span><span style="color:#FF4444">Put '+pp+'%</span></div><div class="pressure-bar"><div style="width:'+cp+'%;height:100%;background:#00CC44"></div><div style="flex:1;background:#FF4444"></div></div>';}}
+
+  // Delta Net
+  const net=d.dCall+d.dPut;const maxVal=Math.max(Math.abs(d.dCall),Math.abs(d.dPut),0.01);const dpct=Math.min(48,(Math.abs(net)/maxVal)*48);const dcol=net>=0?'#00CC44':'#FF4444';const ddir=net>=0?'right':'left';
+  const deltaHTML='<div class="delta-bar"><div class="delta-center"></div><div class="delta-fill" style="width:'+dpct+'%;'+ddir+':50%;background:'+dcol+'"></div></div><div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:#00CC44">'+d.dCall+'M$</span><span style="color:'+dcol+';font-weight:600">Net '+(net>=0?'+':'')+net.toFixed(1)+'M$</span><span style="color:#FF4444">'+d.dPut+'M$</span></div>';
+
+  // P/C
+  const pc=d.pcRatio;const pcol=pc>=1.2?'#FF4444':pc<=0.7?'#00CC44':'#FFA500';const ptag=pc>=1.2?'تحوط مرتفع':pc<=0.7?'مضاربة مفرطة':'متوازن';const pcls=pc>=1.2?'pc-bear':pc<=0.7?'pc-bull':'pc-neu';
+  const pcHTML='<div style="display:flex;justify-content:space-between;align-items:center"><span class="pc-big" style="color:'+pcol+'">'+pc+'</span><span class="pc-tag '+pcls+'">'+ptag+'</span></div><div style="height:5px;background:#1a1a1a;border-radius:3px;overflow:hidden;margin-top:6px"><div style="height:100%;width:'+Math.min(100,pc/2*100)+'%;background:'+pcol+';border-radius:3px"></div></div>';
+
+  // Gamma Profile (top 8)
+  let gammaHTML='<div style="color:#555;font-size:10px;text-align:center;padding:4px">لا توجد بيانات</div>';
+  if(pairs.length){const maxAbs=Math.max(...pairs.map(p=>Math.abs(p.gex)));const top=[...pairs].sort((a,b)=>Math.abs(b.gex)-Math.abs(a.gex)).slice(0,8).sort((a,b)=>b.strike-a.strike);gammaHTML=top.map(p=>{const pct=Math.min(100,(Math.abs(p.gex)/maxAbs)*100);const col=p.gex>=0?'#00CC44':'#FF4444';const val=(p.gex>=0?'+':'')+Math.round(p.gex/1000)+'K';const near=Math.abs(p.strike-d.spot)<(d.callWall-d.putWall)*0.03;return'<div class="gp-bar-wrap"><span class="gp-label" style="color:'+(near?'#4da6ff':'#555')+'">'+p.strike+'</span><div class="gp-track"><div class="gp-fill" style="width:'+pct.toFixed(1)+'%;background:'+col+'"></div></div><span class="gp-val" style="color:'+col+'">'+val+'</span></div>';}).join('');}
+
+  document.getElementById('sidebar').innerHTML=
+    '<div class="sb-section"><div class="sb-title">'+ticker+' — المستويات</div>'+
+    '<div class="lv-item lv-cw"><span class="lv-label">مقاومة الكول</span><span class="lv-val vc-cw">'+d.callWall+'</span></div>'+
+    '<div class="lv-item lv-hvl"><span class="lv-label">الأعلى سيولة</span><span class="lv-val vc-hvl">'+d.topGamma+'</span></div>'+
+    '<div class="lv-item lv-zg"><span class="lv-label">نقطة التحول</span><span class="lv-val vc-zg">'+d.zeroGamma+'</span></div>'+
+    '<div class="lv-item lv-pw"><span class="lv-label">دعم البوت</span><span class="lv-val vc-pw">'+d.putWall+'</span></div></div>'+
+    '<div class="sb-section"><div class="sb-title">GEX Levels</div><div class="gex-pills">'+pills+'</div></div>'+
+    '<div class="sb-section"><div class="sb-title">أفضل العقود</div>'+cHTML(d.c1)+cHTML(d.c2)+cHTML(d.c3)+'</div>'+
+    '<div class="sb-section"><div class="sb-title">الإحصائيات</div><div class="stat-box">'+
+    '<div class="stat-row"><span class="sl">OI Call</span><span class="sv" style="color:#00CC44">'+Number(d.oiCall).toLocaleString()+'</span></div>'+
+    '<div class="stat-row"><span class="sl">OI Put</span><span class="sv" style="color:#FF4444">'+Number(d.oiPut).toLocaleString()+'</span></div>'+
+    '<div class="stat-row"><span class="sl">P/C Ratio</span><span class="sv">'+d.pcRatio+'</span></div>'+
+    '<div class="stat-row"><span class="sl">Delta Call</span><span class="sv" style="color:#00CC44">'+d.dCall+'M$</span></div>'+
+    '<div class="stat-row"><span class="sl">Delta Put</span><span class="sv" style="color:#FF4444">'+d.dPut+'M$</span></div>'+
+    '<div class="stat-row"><span class="sl">Vega</span><span class="sv">'+d.vega+'M$</span></div>'+
+    '</div></div>'+
+    '<div class="sb-section"><div class="sb-title">0DTE Pressure</div>'+pressureHTML+'</div>'+
+    '<div class="sb-section"><div class="sb-title">Delta Net Exposure</div>'+deltaHTML+'</div>'+
+    '<div class="sb-section"><div class="sb-title">Put / Call Ratio</div>'+pcHTML+'</div>'+
+    '<div class="sb-section"><div class="sb-title">Gamma Profile</div>'+gammaHTML+'</div>';
+}
 
 function getGammaData(d){if(!d.intradayRaw||d.intradayRaw==='—'||d.intradayRaw.length<5)return[];return d.intradayRaw.split(',').map(p=>{const s=p.split(':');return{strike:parseFloat(s[0]),gex:parseFloat(s[1])};}).filter(p=>p.strike&&!isNaN(p.gex));}
 
@@ -273,7 +316,7 @@ function renderPCCard(){const t=document.getElementById('sel-pc').value;const d=
 
 function renderAllIndicators(){renderGammaCard();renderPressureCard();renderDeltaCard();renderPCCard();}
 
-async function fetchCandles(ticker,tf){const sym=POLY_MAP[ticker]||ticker;const now=new Date();const from=new Date(now);if(tf==='D')from.setMonth(from.getMonth()-6);else if(tf==='60')from.setDate(from.getDate()-30);else if(tf==='15')from.setDate(from.getDate()-15);else from.setDate(from.getDate()-7);const fromStr=from.toISOString().slice(0,10);const toStr=now.toISOString().slice(0,10);const mult=tf==='D'?1:parseInt(tf);const span=tf==='D'?'day':'minute';const url='https://api.polygon.io/v2/aggs/ticker/'+encodeURIComponent(sym)+'/range/'+mult+'/'+span+'/'+fromStr+'/'+toStr+'?adjusted=true&sort=asc&limit=5000&apiKey='+POLY_KEY;const res=await fetch(url);const data=await res.json();if(!data.results||data.results.length===0)return[];return data.results.map(b=>({time:b.t/1000,open:+b.o.toFixed(2),high:+b.h.toFixed(2),low:+b.l.toFixed(2),close:+b.c.toFixed(2)}));}
+async function fetchCandles(ticker,tf){const sym=POLY_MAP[ticker]||ticker;const now=new Date();const from=new Date(now);if(tf==='D')from.setMonth(from.getMonth()-6);else if(tf==='60')from.setDate(from.getDate()-30);else if(tf==='15')from.setDate(from.getDate()-15);else from.setDate(from.getDate()-7);const fromStr=from.toISOString().slice(0,10);const toDate=new Date(now);toDate.setDate(toDate.getDate()+1);const toStr=toDate.toISOString().slice(0,10);const mult=tf==='D'?1:parseInt(tf);const span=tf==='D'?'day':'minute';const url='https://api.polygon.io/v2/aggs/ticker/'+encodeURIComponent(sym)+'/range/'+mult+'/'+span+'/'+fromStr+'/'+toStr+'?adjusted=true&sort=asc&limit=5000&apiKey='+POLY_KEY;const res=await fetch(url);const data=await res.json();if(!data.results||data.results.length===0)return[];return data.results.map(b=>({time:b.t/1000,open:+b.o.toFixed(2),high:+b.h.toFixed(2),low:+b.l.toFixed(2),close:+b.c.toFixed(2)}));}
 
 function initChart(){const container=document.getElementById('chart-container');if(chart){chart.remove();chart=null;candleSeries=null;}chart=LightweightCharts.createChart(container,{layout:{background:{color:'#0a0a0a'},textColor:'#555'},grid:{vertLines:{color:'#111'},horzLines:{color:'#111'}},crosshair:{mode:LightweightCharts.CrosshairMode.Normal},rightPriceScale:{borderColor:'#1a1a1a'},timeScale:{borderColor:'#1a1a1a',timeVisible:true,secondsVisible:false,rightOffset:10},width:container.clientWidth,height:container.clientHeight});candleSeries=chart.addCandlestickSeries({upColor:'#00CC44',downColor:'#FF4444',borderUpColor:'#00CC44',borderDownColor:'#FF4444',wickUpColor:'#00CC44',wickDownColor:'#FF4444'});window.addEventListener('resize',()=>{if(chart)chart.applyOptions({width:container.clientWidth,height:container.clientHeight});});}
 
@@ -283,7 +326,7 @@ async function loadChart(ticker){const d=allData.find(x=>x.ticker===ticker);if(!
 
 function setTF(el,tf){document.querySelectorAll('.tf').forEach(e=>e.classList.remove('active'));el.classList.add('active');currentTF=tf;chartLoaded=false;if(selectedTicker)loadChart(selectedTicker);}
 
-function selectTicker(ticker){selectedTicker=ticker;chartLoaded=false;buildToolbar();if(currentView==='chart')loadChart(ticker);else if(currentView==='overview')renderOverview();}
+function selectTicker(ticker){selectedTicker=ticker;chartLoaded=false;buildToolbar();if(currentView==='overview'){showView('chart');}else if(currentView==='chart')loadChart(ticker);else renderOverview();}
 
 let activeFilters=new Set(),scrSort={key:'distCall',asc:true};
 
