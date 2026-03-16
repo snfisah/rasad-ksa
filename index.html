@@ -25,15 +25,26 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
 .ticker-label{font-size:13px;color:#555;font-weight:500}
 .price-main{font-size:28px;font-weight:700;color:#fff;line-height:1}
 .price-chg{font-size:13px;margin-top:2px}
-.chg-up{color:#00CC44}.chg-dn{color:#FF4444}
 .tf-row{display:flex;gap:4px;align-items:center}
 .tf{font-size:12px;padding:4px 10px;border-radius:5px;color:#555;border:0.5px solid #222;cursor:pointer;transition:all .15s}
 .tf.active,.tf:hover{color:#fff;border-color:#444;background:#1a1a1a}
-#chart-container{flex:1;position:relative}
-.chart-legend{padding:8px 16px;display:flex;flex-wrap:wrap;gap:12px;border-top:0.5px solid #1a1a1a;background:#0d0d0d;flex-shrink:0}
-.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:#555}
-.leg-line{width:20px;height:2px;border-radius:1px}
-.leg-dash{width:20px;border-top:2px dashed}
+#chart-wrap{flex:1;position:relative;overflow:hidden}
+#chart-container{position:absolute;inset:0}
+#chart-container iframe{width:100%;height:100%;border:none}
+/* ── Overlay Lines ── */
+#levels-overlay{position:absolute;inset:0;pointer-events:none;z-index:10}
+.ov-line{position:absolute;left:0;right:0;display:flex;align-items:center;height:0}
+.ov-l{height:0;flex:1}
+.ov-solid{border-top-width:1.5px;border-top-style:solid}
+.ov-dashed{border-top-width:1px;border-top-style:dashed}
+.ov-lbl{font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px;white-space:nowrap;margin-right:2px}
+.ov-val{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:2px;white-space:nowrap}
+.ov-cw .ov-l{border-color:#FF4444}.ov-cw .ov-lbl{color:#FF4444;background:#0d0000}.ov-cw .ov-val{color:#FF4444;background:#1a0505;border:0.5px solid #FF4444}
+.ov-pw .ov-l{border-color:#00CC44}.ov-pw .ov-lbl{color:#00CC44;background:#000d00}.ov-pw .ov-val{color:#00CC44;background:#051a05;border:0.5px solid #00CC44}
+.ov-zg .ov-l{border-color:#666}.ov-zg .ov-lbl{color:#888;background:#0d0d0d}.ov-zg .ov-val{color:#888;background:#111;border:0.5px solid #444}
+.ov-hvl .ov-l{border-color:#4da6ff;opacity:.7}.ov-hvl .ov-lbl{color:#4da6ff;background:#00050d}
+.ov-gx .ov-l{border-color:#FFA500;opacity:.6}.ov-gx .ov-lbl{color:#FFA500;background:#0d0800;font-size:9px}
+/* ── Sidebar ── */
 .sidebar{width:260px;border-right:0.5px solid #1e1e1e;background:#0d0d0d;display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
 .sb-section{padding:14px 14px 8px;border-bottom:0.5px solid #141414}
 .sb-title{font-size:11px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:600}
@@ -56,6 +67,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
 .stat-row{display:flex;justify-content:space-between;padding:8px 11px;border-bottom:0.5px solid #1a1a1a}
 .stat-row:last-child{border-bottom:none}
 .sl{font-size:12px;color:#555}.sv{font-size:12px;font-weight:600}
+/* ── Overview ── */
 .overview-panel{flex:1;overflow-y:auto;padding:16px}
 .ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
 .ov-card{background:#111;border:0.5px solid #1e1e1e;border-radius:12px;padding:13px 14px;cursor:pointer;transition:border-color .15s}
@@ -100,7 +112,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
       <div class="ct-left">
         <div class="ticker-label" id="chart-name">—</div>
         <div class="price-main" id="chart-price">—</div>
-        <div class="price-chg" id="chart-chg"></div>
       </div>
       <div class="tf-row">
         <span class="tf active" onclick="setTF(this,'5m')">5د</span>
@@ -109,25 +120,21 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
         <span class="tf" onclick="setTF(this,'1d')">يوم</span>
       </div>
     </div>
-    <div id="chart-container"></div>
-    <div class="chart-legend">
-      <div class="leg"><div class="leg-line" style="background:#FF4444"></div>Call Wall</div>
-      <div class="leg"><div class="leg-line" style="background:#00CC44"></div>Put Wall</div>
-      <div class="leg"><div class="leg-dash" style="border-color:#888"></div>Zero Gamma</div>
-      <div class="leg"><div class="leg-line" style="background:#4da6ff"></div>HVL</div>
-      <div class="leg"><div class="leg-dash" style="border-color:#FFA500"></div>GEX Levels</div>
+    <div id="chart-wrap">
+      <div id="chart-container"></div>
+      <div id="levels-overlay"></div>
     </div>
   </div>
 </div>
 <script>
 const SHEET_ID = '1kS31BVYSn_xEPCtsOOeebMZuOyDS3OpQaE1Sv8ZR1wU';
-const CSV_URL  = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv&gid=0');
+const CSV_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv&gid=0');
 
 let allData = [], selectedTicker = null, currentView = 'overview', currentTF = '5m';
 
 async function fetchSheets() {
   try {
-    const res  = await fetch(CSV_URL);
+    const res = await fetch(CSV_URL);
     const text = await res.text();
     const rows = text.trim().split('\n').map(r => r.split(','));
     allData = rows.slice(1).filter(r => r[0] && r[0] !== 'Ticker' && parseFloat(r[1]) > 0).map(r => {
@@ -146,7 +153,6 @@ async function fetchSheets() {
     else if (selectedTicker) updateChart(selectedTicker);
   } catch(e) {
     document.getElementById('update-badge').textContent = 'خطأ في التحميل';
-    console.error(e);
   }
 }
 
@@ -207,6 +213,33 @@ function renderSidebar(ticker) {
     '<div class="stat-row"><span class="sl">Vega</span><span class="sv">' + d.vega + 'M$</span></div></div></div>';
 }
 
+function drawOverlay(d) {
+  const overlay = document.getElementById('levels-overlay');
+  const h = overlay.clientHeight || 500;
+  // نحسب النطاق المرئي: نضيف padding 15% فوق وتحت
+  const pad = (d.callWall - d.putWall) * 0.5;
+  const maxP = d.callWall + pad;
+  const minP = d.putWall - pad;
+  const range = maxP - minP;
+  const toTop = price => ((maxP - price) / range * 100).toFixed(2) + '%';
+
+  const lines = [
+    {price: d.callWall,  cls: 'ov-cw',  solid: true,  lbl: 'مقاومة الكول', val: d.callWall},
+    {price: d.topGamma,  cls: 'ov-hvl', solid: true,  lbl: 'HVL',          val: d.topGamma},
+    {price: d.zeroGamma, cls: 'ov-zg',  solid: false, lbl: 'نقطة التحول',  val: d.zeroGamma},
+    {price: d.putWall,   cls: 'ov-pw',  solid: true,  lbl: 'دعم البوت',    val: d.putWall},
+  ];
+  const gexs = [d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(g=>g>0&&Math.abs(g-d.callWall)>0.5&&Math.abs(g-d.putWall)>0.5&&Math.abs(g-d.zeroGamma)>0.5);
+  gexs.forEach(g => lines.push({price:g, cls:'ov-gx', solid:false, lbl:String(g), val:null}));
+
+  overlay.innerHTML = lines.map(l => {
+    const top = toTop(l.price);
+    const lineStyle = l.solid ? 'ov-solid' : 'ov-dashed';
+    const valHtml = l.val ? '<span class="ov-val">' + l.val + '</span>' : '';
+    return '<div class="ov-line ' + l.cls + '" style="top:' + top + '"><span class="ov-lbl">' + l.lbl + '</span><div class="ov-l ' + lineStyle + '"></div>' + valHtml + '</div>';
+  }).join('');
+}
+
 function setTF(el, tf) {
   document.querySelectorAll('.tf').forEach(e => e.classList.remove('active'));
   el.classList.add('active');
@@ -224,8 +257,8 @@ function updateChart(ticker) {
   const tvTicker = encodeURIComponent(tvMap[ticker] || ticker);
   const tfMap = {'5m':'5','15m':'15','1h':'60','1d':'D'};
   const interval = tfMap[currentTF] || 'D';
-  const container = document.getElementById('chart-container');
-  container.innerHTML = '<iframe src="https://www.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=' + tvTicker + '&interval=' + interval + '&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=1&saveimage=0&toolbarbg=0a0a0a&studies=[]&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&locale=ar" style="width:100%;height:100%;border:none" allowtransparency="true" scrolling="no" allowfullscreen></iframe>';
+  document.getElementById('chart-container').innerHTML = '<iframe src="https://www.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=' + tvTicker + '&interval=' + interval + '&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=1&saveimage=0&toolbarbg=0a0a0a&studies=[]&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&locale=ar" style="width:100%;height:100%;border:none" allowtransparency="true" scrolling="no" allowfullscreen></iframe>';
+  setTimeout(() => drawOverlay(d), 300);
 }
 
 function selectTicker(ticker) {
