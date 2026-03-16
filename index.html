@@ -438,7 +438,16 @@ async function fetchSheets(){try{const res=await fetch(CSV_URL);const text=await
       gv4:hasGv?g(19):0,gv5:hasGv?g(20):0,gv6:hasGv?g(21):0,gv7:hasGv?g(22):0,
       intradayRaw:'—',updatedAt:s(15)};
   }
-});const last=allData[allData.length-1]?.updatedAt||'—';document.getElementById('update-badge').innerHTML='آخر تحديث: <b>'+last.slice(11,16)+'</b>';buildToolbar();buildIndicatorSelects();if(currentView==='overview')renderOverview();else if(currentView==='chart'&&selectedTicker&&!chartLoaded)loadChart(selectedTicker);else if(currentView==='chart'&&selectedTicker)renderSidebar(selectedTicker);else if(currentView==='indicators')renderAllIndicators();}catch(e){document.getElementById('update-badge').textContent='خطأ في التحميل';}}
+});const last=allData[allData.length-1]?.updatedAt||'—';
+  document.getElementById('update-badge').innerHTML='آخر تحديث: <b>'+last.slice(11,16)+'</b>';
+  buildToolbar();
+  buildIndicatorSelects();
+  // أول تحميل — اعرض الكل تلقائياً
+  if(currentView==='overview'||!document.querySelector('.nav-tab.active')){
+    showView('overview');
+  } else if(currentView==='chart'&&selectedTicker&&!chartLoaded) loadChart(selectedTicker);
+  else if(currentView==='chart'&&selectedTicker) renderSidebar(selectedTicker);
+  else if(currentView==='indicators') renderAllIndicators();}catch(e){document.getElementById('update-badge').textContent='خطأ في التحميل';}}
 
 function buildToolbar(){const s=document.getElementById('ticker-scroll');s.innerHTML='';allData.forEach(d=>{const c=document.createElement('div');c.className='t-chip'+(selectedTicker===d.ticker?' active':'');c.textContent=d.ticker;c.onclick=()=>selectTicker(d.ticker);s.appendChild(c);});}
 function scrollTickers(dx){document.getElementById('ticker-scroll').scrollBy({left:dx,behavior:'smooth'});}
@@ -910,7 +919,6 @@ function showView(view){
 //   التشغيل
 // ══════════════════════════════════════
 fetchSheets();
-showView('overview');
 setInterval(fetchSheets, 5*60*1000);
 
 // تشغيل WebSocket فقط أثناء السوق
