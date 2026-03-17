@@ -706,7 +706,7 @@ function renderOverview(){
     var bull=d.spot>=d.zeroGamma;
     var chgVal=d.dCall+d.dPut;
     var chgStr=chgVal>=0?'\u25b2 +$'+Math.abs(chgVal).toFixed(1)+'M':'\u25bc -$'+Math.abs(chgVal).toFixed(1)+'M';
-    html+='<div class="pulse-card '+(bull?'bull':'bear')+'" onclick="selectTicker(''+tk+'')">'
+    html+='<div class="pulse-card '+(bull?'bull':'bear')+'" onclick="selectTicker(\'+tk+\')">'
       +'<div class="pulse-ticker">'+tk+'</div>'
       +'<div class="pulse-price">'+d.spot.toLocaleString()+'</div>'
       +'<div class="pulse-meta">'
@@ -745,7 +745,7 @@ function renderOverview(){
   html+='<div class="home-section"><div class="home-section-title">أكثر الأسهم حركة</div><div class="movers-grid">';
   html+='<div class="movers-card"><div class="movers-header" style="color:var(--green)">\u25b2 إيجابي — فوق Zero Gamma</div>';
   bulls.forEach(function(d,i){
-    html+='<div class="mover-row" onclick="selectTicker(''+d.ticker+'')">'
+    html+='<div class="mover-row" onclick="selectTicker(\'+d.ticker+\')">'
       +'<span class="mover-rank">'+(i+1)+'</span>'
       +'<span class="mover-ticker">'+d.ticker+'</span>'
       +'<span class="mover-price">'+d.spot.toLocaleString()+'</span>'
@@ -756,7 +756,7 @@ function renderOverview(){
   html+='</div>';
   html+='<div class="movers-card"><div class="movers-header" style="color:var(--red)">\u25bc سلبي — تحت Zero Gamma</div>';
   bears.forEach(function(d,i){
-    html+='<div class="mover-row" onclick="selectTicker(''+d.ticker+'')">'
+    html+='<div class="mover-row" onclick="selectTicker(\'+d.ticker+\')">'
       +'<span class="mover-rank">'+(i+1)+'</span>'
       +'<span class="mover-ticker">'+d.ticker+'</span>'
       +'<span class="mover-price">'+d.spot.toLocaleString()+'</span>'
@@ -776,7 +776,7 @@ function renderOverview(){
     var oiStr=c.oi>=1000000?(c.oi/1000000).toFixed(2)+'M':c.oi.toLocaleString();
     var stars=c.score>100000?'\u2605\u2605\u2605\u2605\u2605':c.score>50000?'\u2605\u2605\u2605\u2605\u2606':c.score>20000?'\u2605\u2605\u2605\u2606\u2606':'\u2605\u2605\u2606\u2606\u2606';
     var quality=c.score>100000?'<span style="color:var(--green);font-weight:700;font-size:11px">ممتاز</span>':c.score>50000?'<span style="color:var(--gold);font-weight:700;font-size:11px">جيد</span>':'<span style="color:var(--text3);font-weight:600;font-size:11px">متوسط</span>';
-    html+='<tr onclick="selectTicker(''+c.ticker+'')">'
+    html+='<tr onclick="selectTicker(\'+c.ticker+\')">'
       +'<td><span class="ct-ticker-big">'+c.ticker+'</span></td>'
       +'<td><span class="ct-strike-big">'+c.strike+'</span></td>'
       +'<td><span class="ct-type-pill '+(c.type==='call'?'ct-call-pill':'ct-put-pill')+'">'+c.type.toUpperCase()+'</span></td>'
