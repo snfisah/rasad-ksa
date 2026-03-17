@@ -6,148 +6,252 @@
 <title>مملكة التداول — رصد KSA</title>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
-body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#fff;display:flex;flex-direction:column}
-.header{background:#0d0d0d;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid #1e1e1e;flex-shrink:0}
-.logo{font-size:16px;font-weight:700}.logo span{color:#FFA500}
-.badge{background:#111;border:0.5px solid #222;border-radius:6px;padding:4px 10px;font-size:11px;color:#666}
-.badge b{color:#00CC44}
-.dot{width:6px;height:6px;border-radius:50%;background:#00CC44;display:inline-block;animation:pulse 2s infinite}
-.dot.off{background:#444;animation:none}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.ws-badge{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:600;transition:all .3s}
-.ws-live{background:#0d1f0d;color:#00CC44;border:0.5px solid #1a3a1a}
-.ws-off{background:#1a1a1a;color:#444;border:0.5px solid #222}
-.nav-tabs{display:flex;gap:4px;padding:6px 12px;background:#0d0d0d;border-bottom:0.5px solid #1e1e1e;flex-shrink:0}
-.nav-tab{padding:5px 14px;border-radius:6px;font-size:12px;color:#555;border:0.5px solid transparent;cursor:pointer;white-space:nowrap;transition:all .15s;font-weight:500}
-.nav-tab:hover{color:#aaa}.nav-tab.active{background:#1a1a1a;color:#fff;border-color:#2a2a2a}
-.ticker-toolbar{display:flex;align-items:center;gap:0;background:#0d0d0d;border-bottom:0.5px solid #1e1e1e;flex-shrink:0;overflow:hidden}
+:root{
+  --bg0:#070709;--bg1:#0e0e12;--bg2:#141418;--bg3:#1c1c22;--bg4:#252530;
+  --border:#1e1e28;--border2:#2a2a38;
+  --text1:#f0f0f8;--text2:#9090a8;--text3:#505068;
+  --gold:#E8A020;--gold-dim:#3a2800;
+  --green:#00D964;--green-dim:#002810;--green-mid:#004820;
+  --red:#FF4455;--red-dim:#280010;--red-mid:#480020;
+  --blue:#4da6ff;--blue-dim:#001830;
+  --purple:#9B6DFF;
+  --radius:8px;--radius-lg:12px;--radius-xl:16px;
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg0);color:var(--text1);display:flex;flex-direction:column;font-size:13px}
+
+/* ─── HEADER ─── */
+.header{background:var(--bg1);padding:10px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo{font-size:15px;font-weight:800;letter-spacing:-0.3px;color:var(--text1)}
+.logo span{color:var(--gold)}
+.badge{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:4px 11px;font-size:11px;color:var(--text3)}
+.badge b{color:var(--green)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 2s infinite;box-shadow:0 0 6px var(--green)}
+.dot.off{background:var(--text3);animation:none;box-shadow:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ─── WS BADGE ─── */
+.ws-badge{font-size:10px;padding:3px 9px;border-radius:5px;font-weight:700;letter-spacing:.5px;transition:all .3s}
+.ws-live{background:var(--green-dim);color:var(--green);border:1px solid var(--green-mid)}
+.ws-off{background:var(--bg2);color:var(--text3);border:1px solid var(--border2)}
+
+/* ─── NAV TABS ─── */
+.nav-tabs{display:flex;gap:2px;padding:7px 14px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0}
+.nav-tab{padding:6px 16px;border-radius:var(--radius);font-size:12px;color:var(--text3);border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:all .18s;font-weight:500;letter-spacing:.1px}
+.nav-tab:hover{color:var(--text2);background:var(--bg2)}
+.nav-tab.active{background:var(--bg3);color:var(--text1);border-color:var(--border2);font-weight:600}
+
+/* ─── TICKER TOOLBAR ─── */
+.ticker-toolbar{display:flex;align-items:center;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;overflow:hidden}
 .ticker-scroll{display:flex;gap:3px;padding:6px 10px;overflow-x:auto;flex:1;scroll-behavior:smooth}
-.ticker-scroll::-webkit-scrollbar{height:2px}.ticker-scroll::-webkit-scrollbar-thumb{background:#222}
-.t-chip{padding:4px 12px;border-radius:6px;font-size:12px;color:#555;border:0.5px solid #1a1a1a;cursor:pointer;white-space:nowrap;transition:all .15s;font-weight:500;flex-shrink:0}
-.t-chip:hover{color:#aaa;border-color:#2a2a2a}.t-chip.active{background:#1a1a1a;color:#fff;border-color:#FFA500}
-.scroll-btn{width:28px;height:100%;background:#0d0d0d;border:none;color:#444;cursor:pointer;font-size:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:color .15s;padding:0 2px}
-.scroll-btn:hover{color:#aaa}
+.ticker-scroll::-webkit-scrollbar{height:2px}.ticker-scroll::-webkit-scrollbar-thumb{background:var(--border2)}
+.t-chip{padding:4px 13px;border-radius:6px;font-size:11px;font-weight:500;color:var(--text3);border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.t-chip:hover{color:var(--text2);background:var(--bg2);border-color:var(--border)}
+.t-chip.active{background:var(--bg3);color:var(--text1);border-color:var(--gold);font-weight:600}
+.scroll-btn{width:28px;height:100%;background:var(--bg1);border:none;color:var(--text3);cursor:pointer;font-size:15px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:color .15s}
+.scroll-btn:hover{color:var(--text2)}
+
+/* ─── LAYOUT ─── */
 .layout{display:flex;flex:1;overflow:hidden}
 .chart-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.chart-top{padding:8px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid #1a1a1a;background:#0d0d0d;flex-shrink:0}
+
+/* ─── CHART TOP BAR ─── */
+.chart-top{padding:9px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);background:var(--bg1);flex-shrink:0}
 .ct-left{display:flex;align-items:baseline;gap:10px}
-.ticker-label{font-size:13px;color:#555;font-weight:600}
-.price-main{font-size:24px;font-weight:700;color:#fff;transition:color .15s}
-.price-main.flash-up{color:#00CC44}.price-main.flash-dn{color:#FF4444}
-.price-chg{font-size:12px}
-.chg-up{color:#00CC44}.chg-dn{color:#FF4444}
+.ticker-label{font-size:12px;color:var(--text3);font-weight:600;letter-spacing:.5px}
+.price-main{font-size:26px;font-weight:800;color:var(--text1);transition:color .15s;letter-spacing:-0.5px}
+.price-main.flash-up{color:var(--green)}.price-main.flash-dn{color:var(--red)}
+.price-chg{font-size:12px;font-weight:500}
+.chg-up{color:var(--green)}.chg-dn{color:var(--red)}
 .tf-row{display:flex;gap:3px}
-.tf{font-size:11px;padding:3px 9px;border-radius:5px;color:#555;border:0.5px solid #222;cursor:pointer;transition:all .15s}
-.tf.active,.tf:hover{color:#fff;border-color:#444;background:#1a1a1a}
+.tf{font-size:11px;padding:4px 10px;border-radius:5px;color:var(--text3);border:1px solid var(--border);cursor:pointer;transition:all .15s;font-weight:500}
+.tf.active,.tf:hover{color:var(--text1);border-color:var(--border2);background:var(--bg3)}
 #chart-container{flex:1;position:relative}
-.sidebar{width:260px;border-right:0.5px solid #1e1e1e;background:#0d0d0d;display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
-.sb-section{padding:10px 12px 8px;border-bottom:0.5px solid #141414}
-.sb-title{font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:600}
-.lv-item{display:flex;justify-content:space-between;align-items:center;padding:6px 9px;background:#111;border-radius:7px;margin-bottom:3px;border-right:2px solid transparent}
-.lv-cw{border-right-color:#FF4444}.lv-pw{border-right-color:#00CC44}.lv-zg{border-right-color:#555}.lv-hvl{border-right-color:#4da6ff}
-.lv-label{font-size:11px;color:#666}.lv-val{font-size:13px;font-weight:600}
-.vc-cw{color:#FF4444}.vc-pw{color:#00CC44}.vc-zg{color:#aaa}.vc-hvl{color:#4da6ff}
-.gex-pills{display:flex;flex-wrap:wrap;gap:3px}
-.gp{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600}
-.g-red{background:#1a0d0d;color:#FF4444;border:0.5px solid #3a1a1a}
-.g-pur{background:#13111f;color:#9B59B6;border:0.5px solid #2a1f4a}
-.g-grn{background:#0d1a0d;color:#00CC44;border:0.5px solid #1a3a1a}
-.contract{background:#111;border-radius:7px;padding:7px 9px;margin-bottom:3px;display:flex;justify-content:space-between;align-items:center;border-right:2px solid #FF4444}
-.contract.call{border-right-color:#00CC44}
-.ct-type{font-size:9px;font-weight:700;color:#FF4444}.contract.call .ct-type{color:#00CC44}
-.ct-strike{font-size:14px;font-weight:700;color:#fff}.ct-info{font-size:9px;color:#555;text-align:left}
-.stat-box{background:#111;border-radius:7px;overflow:hidden}
-.stat-row{display:flex;justify-content:space-between;padding:6px 9px;border-bottom:0.5px solid #1a1a1a}
+
+/* ─── SIDEBAR ─── */
+.sidebar{width:265px;border-right:1px solid var(--border);background:var(--bg1);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.sidebar::-webkit-scrollbar{width:3px}.sidebar::-webkit-scrollbar-thumb{background:var(--border2)}
+.sb-section{padding:12px 14px 10px;border-bottom:1px solid var(--border)}
+.sb-title{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:9px;font-weight:600}
+
+/* ─── LEVEL ITEMS ─── */
+.lv-item{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg2);border-radius:var(--radius);margin-bottom:3px;border-right:2px solid transparent}
+.lv-cw{border-right-color:var(--red)}.lv-pw{border-right-color:var(--green)}.lv-zg{border-right-color:var(--text3)}.lv-hvl{border-right-color:var(--blue)}
+.lv-label{font-size:11px;color:var(--text3);font-weight:500}.lv-val{font-size:13px;font-weight:700}
+.vc-cw{color:var(--red)}.vc-pw{color:var(--green)}.vc-zg{color:var(--text2)}.vc-hvl{color:var(--blue)}
+
+/* ─── GEX PILLS ─── */
+.gex-pills{display:flex;flex-wrap:wrap;gap:4px}
+.gp{font-size:10px;padding:3px 8px;border-radius:5px;font-weight:600;letter-spacing:.2px}
+.g-red{background:var(--red-dim);color:var(--red);border:1px solid var(--red-mid)}
+.g-pur{background:#160e28;color:var(--purple);border:1px solid #2e1a50}
+.g-grn{background:var(--green-dim);color:var(--green);border:1px solid var(--green-mid)}
+
+/* ─── CONTRACTS ─── */
+.contract{background:var(--bg2);border-radius:var(--radius);padding:8px 10px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;border-right:2px solid var(--red);transition:background .15s;cursor:pointer}
+.contract:hover{background:var(--bg3)}.contract.call{border-right-color:var(--green)}
+.ct-type{font-size:9px;font-weight:700;color:var(--red);letter-spacing:.5px}.contract.call .ct-type{color:var(--green)}
+.ct-strike{font-size:14px;font-weight:800;color:var(--text1)}.ct-info{font-size:9px;color:var(--text3);text-align:left}
+
+/* ─── STAT BOX ─── */
+.stat-box{background:var(--bg2);border-radius:var(--radius);overflow:hidden}
+.stat-row{display:flex;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--border)}
 .stat-row:last-child{border-bottom:none}
-.sl{font-size:10px;color:#555}.sv{font-size:10px;font-weight:600}
+.sl{font-size:10px;color:var(--text3);font-weight:500}.sv{font-size:11px;font-weight:700}
+
+/* ─── OVERVIEW ─── */
 .overview-panel{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column}
-.ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px}
-.ov-card{background:#111;border:0.5px solid #1e1e1e;border-radius:10px;padding:10px 12px;cursor:pointer;transition:border-color .15s}
-.ov-card:hover{border-color:#333}.ov-card.sel{border-color:#FFA500}
-.ov-top{display:flex;justify-content:space-between;margin-bottom:5px}
-.ov-ticker{font-size:14px;font-weight:700}.ov-price{font-size:11px;color:#555}
-.ov-lrow{display:flex;justify-content:space-between;margin:2px 0}
-.ov-ll{font-size:9px;color:#444}.ov-lv{font-size:9px;font-weight:600}
-.ov-bar{height:3px;background:#1a1a1a;border-radius:2px;position:relative;margin:4px 0}
-.ov-spot{position:absolute;top:-3px;width:3px;height:9px;background:#4da6ff;border-radius:1px}
-.ov-footer{display:flex;justify-content:space-between;margin-top:5px}
-.ov-badge{font-size:9px;padding:2px 6px;border-radius:4px}
-.ob-bull{background:#0d1f0d;color:#00CC44;border:0.5px solid #1a3a1a}
-.ob-bear{background:#1f0d0d;color:#FF4444;border:0.5px solid #3a1a1a}
-.ov-pc{font-size:9px;color:#444}
+.overview-panel::-webkit-scrollbar{width:3px}.overview-panel::-webkit-scrollbar-thumb{background:var(--border2)}
+.ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.ov-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:11px 13px;cursor:pointer;transition:all .18s}
+.ov-card:hover{border-color:var(--border2);background:var(--bg3);transform:translateY(-1px)}
+.ov-card.sel{border-color:var(--gold);background:var(--bg3)}
+.ov-top{display:flex;justify-content:space-between;margin-bottom:6px;align-items:baseline}
+.ov-ticker{font-size:14px;font-weight:800;color:var(--text1)}.ov-price{font-size:11px;color:var(--text2);font-weight:600}
+.ov-lrow{display:flex;justify-content:space-between;margin:3px 0}
+.ov-ll{font-size:9px;color:var(--text3);font-weight:500}.ov-lv{font-size:9px;font-weight:700}
+.ov-bar{height:3px;background:var(--bg4);border-radius:2px;position:relative;margin:5px 0}
+.ov-spot{position:absolute;top:-4px;width:3px;height:11px;background:var(--blue);border-radius:2px;box-shadow:0 0 5px var(--blue)}
+.ov-footer{display:flex;justify-content:space-between;margin-top:7px;align-items:center}
+.ov-badge{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700}
+.ob-bull{background:var(--green-dim);color:var(--green);border:1px solid var(--green-mid)}
+.ob-bear{background:var(--red-dim);color:var(--red);border:1px solid var(--red-mid)}
+.ov-pc{font-size:9px;color:var(--text3);font-weight:600}
+
+/* ─── INDICATORS ─── */
 .ind-panel{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
 .ind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
-.ind-card{background:#111;border:0.5px solid #1e1e1e;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.ind-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;display:flex;flex-direction:column;gap:10px}
 .ind-card-header{display:flex;justify-content:space-between;align-items:center}
-.ind-card-title{font-size:11px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:1px}
-.ind-select{background:#0d0d0d;border:0.5px solid #2a2a2a;border-radius:6px;color:#fff;font-size:11px;padding:3px 8px;cursor:pointer;outline:none}
-.ind-select option{background:#0d0d0d}
-.pressure-bar{height:10px;background:#1a1a1a;border-radius:5px;overflow:hidden;margin:6px 0;display:flex}
-.delta-bar{height:8px;background:#1a1a1a;border-radius:4px;position:relative;margin:6px 0}
+.ind-card-title{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1.2px}
+.ind-select{background:var(--bg1);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;padding:4px 9px;cursor:pointer;outline:none;font-family:inherit}
+.ind-select option{background:var(--bg1);color:var(--text1)}
+.pressure-bar{height:10px;background:var(--bg4);border-radius:5px;overflow:hidden;margin:6px 0;display:flex}
+.delta-bar{height:8px;background:var(--bg4);border-radius:4px;position:relative;margin:6px 0}
 .delta-fill{height:100%;border-radius:4px;position:absolute;transition:all .4s}
-.delta-center{position:absolute;left:50%;top:-2px;width:1px;height:12px;background:#2a2a2a}
-.pc-big{font-size:22px;font-weight:700}
-.pc-tag{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600}
-.pc-bull{background:#0d1f0d;color:#00CC44;border:0.5px solid #1a3a1a}
-.pc-bear{background:#1f0d0d;color:#FF4444;border:0.5px solid #3a1a1a}
-.pc-neu{background:#1a120d;color:#FFA500;border:0.5px solid #3a2a1a}
-.gp-bar-wrap{display:flex;align-items:center;gap:5px;margin-bottom:3px}
-.gp-label{font-size:9px;color:#555;width:34px;text-align:right;flex-shrink:0}
-.gp-track{flex:1;height:8px;background:#1a1a1a;border-radius:2px;position:relative;overflow:visible}
-.gp-fill{height:100%;border-radius:2px;min-width:2px;transition:width .3s}
-.gp-val{font-size:9px;width:28px;text-align:left;flex-shrink:0}
-.gp-spot{position:absolute;top:-3px;width:2px;height:14px;background:#4da6ff;border-radius:1px;z-index:2}
-.loading{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;flex:1;color:#333;font-size:12px}
-.spinner{width:26px;height:26px;border:2px solid #1a1a1a;border-top-color:#FFA500;border-radius:50%;animation:spin .8s linear infinite}
+.delta-center{position:absolute;left:50%;top:-3px;width:1px;height:14px;background:var(--border2)}
+.pc-big{font-size:24px;font-weight:800;letter-spacing:-0.5px}
+.pc-tag{font-size:10px;padding:3px 8px;border-radius:5px;font-weight:700}
+.pc-bull{background:var(--green-dim);color:var(--green);border:1px solid var(--green-mid)}
+.pc-bear{background:var(--red-dim);color:var(--red);border:1px solid var(--red-mid)}
+.pc-neu{background:#1a1500;color:var(--gold);border:1px solid #3a2a00}
+
+/* ─── LOADING ─── */
+.loading{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;flex:1;color:var(--text3);font-size:12px}
+.spinner{width:26px;height:26px;border:2px solid var(--bg3);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── SCREENER ─── */
 .screener-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.filter-bar{display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px;background:#0d0d0d;border-bottom:0.5px solid #1e1e1e;flex-shrink:0;align-items:center}
-.f-btn{padding:4px 11px;border-radius:6px;font-size:11px;color:#555;border:0.5px solid #1a1a1a;cursor:pointer;white-space:nowrap;transition:all .15s;background:transparent}
-.f-btn:hover{color:#aaa;border-color:#2a2a2a}.f-btn.on{color:#fff;border-color:#FFA500;background:#150f00}
-.f-sep{width:1px;height:18px;background:#1a1a1a;flex-shrink:0}
-.scr-body{flex:1;overflow-y:auto}
+.filter-bar{display:flex;flex-wrap:wrap;gap:5px;padding:9px 14px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;align-items:center}
+.f-btn{padding:5px 12px;border-radius:6px;font-size:11px;color:var(--text3);border:1px solid var(--border);cursor:pointer;white-space:nowrap;transition:all .15s;background:transparent;font-family:inherit;font-weight:500}
+.f-btn:hover{color:var(--text2);border-color:var(--border2);background:var(--bg2)}
+.f-btn.on{color:var(--gold);border-color:var(--gold);background:var(--gold-dim)}
+.f-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.scr-body{flex:1;overflow-y:auto}.scr-body::-webkit-scrollbar{width:3px}.scr-body::-webkit-scrollbar-thumb{background:var(--border2)}
 .scr-table{width:100%;border-collapse:collapse}
-.scr-table th{font-size:9px;color:#444;text-transform:uppercase;letter-spacing:1px;padding:7px 10px;border-bottom:0.5px solid #1a1a1a;text-align:right;font-weight:500;position:sticky;top:0;background:#0d0d0d;cursor:pointer}
-.scr-table th:hover{color:#aaa}
-.scr-table td{font-size:11px;padding:8px 10px;border-bottom:0.5px solid #0f0f0f;color:#aaa;cursor:pointer}
-.scr-table tr:hover td{background:#111}
-.scr-ticker{font-size:13px;font-weight:700;color:#fff}
-.scr-badge{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600;white-space:nowrap;display:inline-block}
-.sb-bull{background:#0d1f0d;color:#00CC44;border:0.5px solid #1a3a1a}
-.sb-bear{background:#1f0d0d;color:#FF4444;border:0.5px solid #3a1a1a}
-.sb-neu{background:#1a120d;color:#FFA500;border:0.5px solid #3a2a1a}
-.sb-blu{background:#0d1220;color:#4da6ff;border:0.5px solid #1a2a4a}
-.search-box{background:#0d0d0d;border:0.5px solid #2a2a2a;border-radius:6px;color:#fff;font-size:11px;padding:4px 10px;outline:none;width:110px;flex-shrink:0}
-.search-box::placeholder{color:#444}
-.search-box:focus{border-color:#FFA500}
-.search-drop{position:absolute;top:100%;right:0;background:#111;border:0.5px solid #2a2a2a;border-radius:7px;z-index:999;min-width:140px;max-height:200px;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,.6)}
-.search-drop-item{padding:7px 12px;font-size:12px;cursor:pointer;color:#aaa;white-space:nowrap}
-.search-drop-item:hover{background:#1a1a1a;color:#fff}
+.scr-table th{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;padding:8px 12px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;position:sticky;top:0;background:var(--bg1);cursor:pointer;white-space:nowrap}
+.scr-table th:hover{color:var(--text2)}
+.scr-table td{font-size:12px;padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text2);cursor:pointer}
+.scr-table tr:hover td{background:var(--bg2)}
+.scr-ticker{font-size:13px;font-weight:800;color:var(--text1)}
+.scr-badge{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700;white-space:nowrap;display:inline-block}
+.sb-bull{background:var(--green-dim);color:var(--green);border:1px solid var(--green-mid)}
+.sb-bear{background:var(--red-dim);color:var(--red);border:1px solid var(--red-mid)}
+.sb-neu{background:#1a1500;color:var(--gold);border:1px solid #3a2a00}
+.sb-blu{background:var(--blue-dim);color:var(--blue);border:1px solid #1a3060}
+.scr-empty{color:var(--text3);font-size:13px;text-align:center;padding:50px;font-weight:500}
+
+/* ─── SEARCH ─── */
+.search-box{background:var(--bg2);border:1px solid var(--border2);border-radius:7px;color:var(--text1);font-size:12px;padding:5px 12px;outline:none;width:120px;flex-shrink:0;font-family:inherit;transition:border-color .15s}
+.search-box::placeholder{color:var(--text3)}
+.search-box:focus{border-color:var(--gold);background:var(--bg3)}
+.search-drop{position:absolute;top:calc(100% + 4px);right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);z-index:9999;min-width:160px;max-height:220px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.7)}
+.search-drop-item{padding:9px 14px;font-size:12px;cursor:pointer;color:var(--text2);white-space:nowrap;font-weight:500;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.search-drop-item:last-child{border-bottom:none}
+.search-drop-item:hover{background:var(--bg3);color:var(--text1)}
 .search-wrap{position:relative;flex-shrink:0}
-/* Option Flow */
-.flow-panel{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
-.flow-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#0d0d0d;border-bottom:0.5px solid #1e1e1e;flex-shrink:0}
-.flow-item{background:#111;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;border-right:2px solid transparent;animation:fadeIn .3s ease}
-.flow-call{border-right-color:#00CC44}.flow-put{border-right-color:#FF4444}
+
+/* ─── OPTION FLOW ─── */
+.flow-panel{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:5px;background:var(--bg0)}
+.flow-panel::-webkit-scrollbar{width:3px}.flow-panel::-webkit-scrollbar-thumb{background:var(--border2)}
+.flow-header{padding:10px 14px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0}
 .flow-type{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px}
-.flow-call .flow-type{background:#0d1f0d;color:#00CC44}
-.flow-put .flow-type{background:#1f0d0d;color:#FF4444}
-.flow-strike{font-size:15px;font-weight:700;color:#fff}
-.flow-meta{font-size:10px;color:#555;text-align:left}
-.flow-size{font-size:12px;font-weight:700}
-.flow-bull{color:#00CC44}.flow-bear{color:#FF4444}
-.flow-premium{font-size:10px;color:#FFA500;font-weight:600}
-.flow-empty{color:#444;font-size:13px;text-align:center;padding:40px}
-@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-/* Gamma Profile مطور */
-.gp-chart{display:flex;align-items:flex-end;gap:2px;height:160px;padding:0 4px;overflow-x:auto}
-.gp-col{display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0}
-.gp-bar-up{background:#00CC44;border-radius:2px 2px 0 0;min-height:2px;width:18px;transition:height .3s}
-.gp-bar-dn{background:#FF4444;border-radius:0 0 2px 2px;min-height:2px;width:18px;transition:height .3s}
-.gp-bar-zero{height:1px;width:18px;background:#333}
-.gp-lbl{font-size:8px;color:#444;margin-top:3px;transform:rotate(-45deg);width:28px;text-align:center}
+.flow-call{border-right-color:var(--green)}.flow-put{border-right-color:var(--red)}
+.flow-call .flow-type{background:var(--green-dim);color:var(--green);border:1px solid var(--green-mid)}
+.flow-put .flow-type{background:var(--red-dim);color:var(--red);border:1px solid var(--red-mid)}
+.flow-strike{font-size:16px;font-weight:800;color:var(--text1)}
+.flow-meta{font-size:10px;color:var(--text3)}
+.flow-premium{font-size:12px;color:var(--gold);font-weight:700}
+.flow-empty{color:var(--text3);font-size:14px;text-align:center;padding:60px;font-weight:500;line-height:2}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+/* ─── GAMMA PROFILE ─── */
+.gp-bar-wrap{display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.gp-label{font-size:9px;color:var(--text3);width:34px;text-align:right;flex-shrink:0}
+.gp-track{flex:1;height:8px;background:var(--bg4);border-radius:2px;position:relative;overflow:visible}
+.gp-fill{height:100%;border-radius:2px;min-width:2px;transition:width .3s}
+.gp-val{font-size:9px;width:28px;text-align:left;flex-shrink:0;color:var(--text3)}
+.gp-spot{position:absolute;top:-3px;width:2px;height:14px;background:var(--blue);border-radius:1px;z-index:2;box-shadow:0 0 6px var(--blue)}
+
+/* ─── HOME DASHBOARD ─── */
+.home-panel{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:0;background:var(--bg0)}
+.home-panel::-webkit-scrollbar{width:3px}.home-panel::-webkit-scrollbar-thumb{background:var(--border2)}
+.home-section{padding:14px 16px;border-bottom:1px solid var(--border)}
+.home-section-title{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
+
+/* Pulse row */
+.pulse-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pulse-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden}
+.pulse-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.pulse-card.bull{border-left:3px solid var(--green)}.pulse-card.bear{border-left:3px solid var(--red)}
+.pulse-ticker{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.8px;margin-bottom:4px}
+.pulse-price{font-size:22px;font-weight:800;color:var(--text1);letter-spacing:-0.5px;line-height:1.1}
+.pulse-meta{display:flex;align-items:center;gap:8px;margin-top:5px}
+.pulse-chg{font-size:11px;font-weight:700}
+.pulse-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px}
+
+/* Market pressure */
+.mkt-pressure-grid{display:grid;grid-template-columns:1fr 140px 140px;gap:8px}
+.pressure-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px}
+.pressure-label{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.pressure-bar-track{height:11px;background:var(--bg4);border-radius:6px;overflow:hidden;display:flex;margin:8px 0}
+.pressure-bar-call{background:var(--green);height:100%;border-radius:6px 0 0 6px;transition:width .5s}
+.pressure-bar-put{background:var(--red);height:100%;border-radius:0 6px 6px 0;transition:width .5s}
+.pressure-pct-row{display:flex;justify-content:space-between;font-size:11px;font-weight:700}
+.mini-stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between}
+.mini-stat-lbl{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
+.mini-stat-val{font-size:19px;font-weight:800;letter-spacing:-0.5px;margin-top:4px}
+.mini-stat-sub{font-size:10px;color:var(--text3);margin-top:3px}
+
+/* Movers */
+.movers-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.movers-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:0;overflow:hidden}
+.movers-header{padding:9px 14px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;letter-spacing:.5px}
+.mover-row{display:flex;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;gap:10px}
+.mover-row:last-child{border-bottom:none}
+.mover-row:hover{background:var(--bg3)}
+.mover-rank{font-size:10px;color:var(--text3);width:16px;font-weight:600;flex-shrink:0}
+.mover-ticker{font-size:13px;font-weight:800;color:var(--text1);width:52px;flex-shrink:0}
+.mover-price{font-size:11px;color:var(--text2);width:60px}
+.mover-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0}
+.mover-dist{font-size:10px;font-weight:600;margin-right:auto}
+
+/* Best Contracts */
+.contracts-table{width:100%;border-collapse:collapse}
+.contracts-table th{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:8px 12px;background:var(--bg3);text-align:right;position:sticky;top:0;border-bottom:1px solid var(--border)}
+.contracts-table td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);vertical-align:middle}
+.contracts-table tr{cursor:pointer;transition:background .15s}
+.contracts-table tr:hover td{background:var(--bg3)}
+.ct-ticker-big{font-size:14px;font-weight:800;color:var(--text1)}
+.ct-strike-big{font-size:13px;font-weight:700;color:var(--text2)}
+.ct-type-pill{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:5px;letter-spacing:.5px}
+.ct-call-pill{background:var(--green-dim);color:var(--green);border:1px solid var(--green-mid)}
+.ct-put-pill{background:var(--red-dim);color:var(--red);border:1px solid var(--red-mid)}
+.ct-oi{font-size:12px;font-weight:600}
+.ct-stars{color:var(--gold);letter-spacing:-1px;font-size:12px}
 </style>
 </head>
 <body>
@@ -180,7 +284,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
   </div>
 </div>
 
-<div id="view-overview" class="overview-panel" style="display:flex">
+<div id="view-overview" class="home-panel" style="display:flex;flex-direction:column">
   <div class="loading"><div class="spinner"></div>جاري سحب البيانات...</div>
 </div>
 
@@ -253,9 +357,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
       <span style="font-size:12px;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:1px">📊 Option Flow</span>
       <span class="ws-badge ws-off" id="flow-badge" style="font-size:10px;padding:2px 8px">⬤ OFF</span>
       <!-- زر Connect/Pause/Stop -->
-      <button id="flow-btn-connect" onclick="startFlow()" style="padding:4px 14px;background:#FFA500;border:none;border-radius:5px;color:#000;font-weight:700;cursor:pointer;font-size:11px">▶ Connect</button>
-      <button id="flow-btn-pause"   onclick="pauseFlow()" style="display:none;padding:4px 14px;background:#2a2a2a;border:1px solid #444;border-radius:5px;color:#aaa;font-weight:700;cursor:pointer;font-size:11px">⏸ إيقاف مؤقت</button>
-      <button id="flow-btn-stop"    onclick="stopFlow()"  style="display:none;padding:4px 14px;background:#1a1a1a;border:1px solid #333;border-radius:5px;color:#666;font-weight:700;cursor:pointer;font-size:11px">⏹ قطع</button>
+      <button id="flow-btn-connect" onclick="startFlow()" style="padding:5px 16px;background:var(--gold);border:none;border-radius:6px;color:#000;font-weight:700;cursor:pointer;font-size:11px;font-family:inherit">▶ Connect</button>
+      <button id="flow-btn-pause"   onclick="pauseFlow()" style="display:none;padding:5px 16px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-weight:700;cursor:pointer;font-size:11px;font-family:inherit">⏸ إيقاف مؤقت</button>
+      <button id="flow-btn-stop"    onclick="stopFlow()"  style="display:none;padding:5px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text3);font-weight:700;cursor:pointer;font-size:11px;font-family:inherit">⏹ قطع</button>
       <button onclick="clearFlow()" style="padding:4px 12px;background:#1a1a1a;border:1px solid #222;border-radius:5px;color:#555;font-size:11px;cursor:pointer">✕ مسح</button>
     </div>
     <!-- صف ثاني: الفلاتر -->
@@ -542,7 +646,149 @@ function buildIndicatorSelects(){
   });
 }
 
-function renderOverview(){const panel=document.getElementById('view-overview');if(!allData.length)return;panel.innerHTML='<div style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">'+allData.length+' رمز</div><div class="ov-grid" id="ov-grid"></div>';const grid=document.getElementById('ov-grid');allData.forEach(d=>{const range=d.callWall-d.putWall;const pct=range>0?Math.max(2,Math.min(97,((d.spot-d.putWall)/range)*100)):50;const bull=d.spot>=d.zeroGamma;const card=document.createElement('div');card.className='ov-card '+(selectedTicker===d.ticker?'sel':'');card.onclick=()=>selectTicker(d.ticker);card.innerHTML='<div class="ov-top"><span class="ov-ticker">'+d.ticker+'</span><span class="ov-price">'+d.spot.toLocaleString()+'</span></div><div class="ov-lrow"><span class="ov-ll">Call Wall</span><span class="ov-lv vc-cw">'+d.callWall+'</span></div><div class="ov-bar"><div class="ov-spot" style="left:'+pct.toFixed(1)+'%"></div></div><div class="ov-lrow"><span class="ov-ll">Zero Gamma</span><span class="ov-lv vc-zg">'+d.zeroGamma+'</span></div><div class="ov-lrow"><span class="ov-ll">Put Wall</span><span class="ov-lv vc-pw">'+d.putWall+'</span></div><div class="ov-footer"><span class="ov-badge '+(bull?'ob-bull':'ob-bear')+'">'+(bull?'إيجابي':'سلبي')+'</span><span class="ov-pc">P/C '+d.pcRatio+'</span></div>';grid.appendChild(card);});}
+function renderOverview(){
+  var panel=document.getElementById('view-overview');
+  if(!allData.length)return;
+  var mainTickers=['SPX','SPY','QQQ'];
+
+  // ── ضغط السوق الكلي ──
+  var totalCall=0,totalPut=0,totalDelta=0,totalOI=0;
+  ['SPX','SPY','QQQ','IWM'].forEach(function(tk){
+    var d=allData.find(function(x){return x.ticker===tk;});
+    if(!d)return;
+    var pairs=getGammaData(d);
+    totalCall+=pairs.filter(function(v){return v.gex>0;}).reduce(function(a,b){return a+b.gex;},0);
+    totalPut+=Math.abs(pairs.filter(function(v){return v.gex<0;}).reduce(function(a,b){return a+b.gex;},0));
+    totalDelta+=d.dCall+d.dPut;
+    totalOI+=d.oiCall+d.oiPut;
+  });
+  var totalGEX=totalCall+totalPut||1;
+  var callPct=Math.round(totalCall/totalGEX*100);
+  var putPct=100-callPct;
+  var mktBull=callPct>putPct;
+
+  // ── أفضل العقود ──
+  var allContracts=[];
+  allData.forEach(function(d){
+    [d.c1,d.c2,d.c3].forEach(function(raw){
+      if(!raw||raw==='—')return;
+      var m=raw.match(/([\d.]+)\s+(CALL|PUT)\s+([\d\/]+)\s*\|\s*([\d,]+)/);
+      if(!m)return;
+      var oi=parseInt(m[4].replace(/,/g,''))||0;
+      var type=m[2].toLowerCase();
+      var strike=parseFloat(m[1]);
+      var glArr=[d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(function(x){return x>0;});
+      var minDist=glArr.length?Math.min.apply(null,glArr.map(function(g){return Math.abs(g-strike);})):999;
+      var score=oi*(1+Math.max(0,1-minDist/50)*2);
+      allContracts.push({ticker:d.ticker,strike:m[1],type:type,exp:m[3],oi:oi,score:score});
+    });
+  });
+  allContracts.sort(function(a,b){return b.score-a.score;});
+  var topContracts=allContracts.slice(0,8);
+
+  // ── موفرز ──
+  var moverData=allData.map(function(d){
+    var bull=d.spot>=d.zeroGamma;
+    var distCW=d.callWall>0?+((d.callWall-d.spot)/d.spot*100).toFixed(1):0;
+    var distPW=d.putWall>0?+((d.spot-d.putWall)/d.spot*100).toFixed(1):0;
+    return{ticker:d.ticker,spot:d.spot,bull:bull,distCW:distCW,distPW:distPW,pcRatio:d.pcRatio};
+  });
+  var bulls=moverData.filter(function(d){return d.bull;}).sort(function(a,b){return a.distCW-b.distCW;}).slice(0,5);
+  var bears=moverData.filter(function(d){return !d.bull;}).sort(function(a,b){return a.distPW-b.distPW;}).slice(0,5);
+
+  var html='';
+
+  // 1. نبض السوق
+  html+='<div class="home-section"><div class="home-section-title">نبض السوق</div><div class="pulse-grid">';
+  mainTickers.forEach(function(tk){
+    var d=allData.find(function(x){return x.ticker===tk;});
+    if(!d){html+='<div class="pulse-card"><div class="pulse-ticker">'+tk+'</div></div>';return;}
+    var bull=d.spot>=d.zeroGamma;
+    var chgVal=d.dCall+d.dPut;
+    var chgStr=chgVal>=0?'\u25b2 +$'+Math.abs(chgVal).toFixed(1)+'M':'\u25bc -$'+Math.abs(chgVal).toFixed(1)+'M';
+    html+='<div class="pulse-card '+(bull?'bull':'bear')+'" onclick="selectTicker(''+tk+'')">'
+      +'<div class="pulse-ticker">'+tk+'</div>'
+      +'<div class="pulse-price">'+d.spot.toLocaleString()+'</div>'
+      +'<div class="pulse-meta">'
+      +'<span class="pulse-chg '+(bull?'chg-up':'chg-dn')+'">'+chgStr+'</span>'
+      +'<span class="pulse-badge '+(bull?'ob-bull':'ob-bear')+'">P/C '+d.pcRatio+'</span>'
+      +'</div></div>';
+  });
+  html+='</div></div>';
+
+  // 2. ضغط السوق
+  html+='<div class="home-section"><div class="home-section-title">ضغط السوق العام</div><div class="mkt-pressure-grid">';
+  html+='<div class="pressure-card">'
+    +'<div class="pressure-label">Call vs Put GEX</div>'
+    +'<div class="pressure-bar-track">'
+    +'<div class="pressure-bar-call" style="width:'+callPct+'%"></div>'
+    +'<div class="pressure-bar-put" style="width:'+putPct+'%"></div>'
+    +'</div>'
+    +'<div class="pressure-pct-row">'
+    +'<span style="color:var(--green)">Call '+callPct+'%</span>'
+    +'<span style="color:'+(mktBull?'var(--green)':'var(--red)')+';font-size:12px">'+(mktBull?'\u2705 شراء':'\u274c بيع')+'</span>'
+    +'<span style="color:var(--red)">Put '+putPct+'%</span>'
+    +'</div></div>';
+  var deltaStr=(totalDelta>=0?'+':'')+totalDelta.toFixed(1)+'M$';
+  html+='<div class="mini-stat">'
+    +'<div class="mini-stat-lbl">Delta Net</div>'
+    +'<div class="mini-stat-val" style="color:'+(totalDelta>=0?'var(--green)':'var(--red)')+'">'+deltaStr+'</div>'
+    +'<div class="mini-stat-sub">'+(totalDelta>=0?'صافي شراء':'صافي بيع')+'</div></div>';
+  var oiStr=totalOI>=1000000?(totalOI/1000000).toFixed(2)+'M':(totalOI/1000).toFixed(0)+'K';
+  html+='<div class="mini-stat">'
+    +'<div class="mini-stat-lbl">OI إجمالي</div>'
+    +'<div class="mini-stat-val" style="color:var(--blue)">'+oiStr+'</div>'
+    +'<div class="mini-stat-sub">SPX + SPY + QQQ + IWM</div></div>';
+  html+='</div></div>';
+
+  // 3. موفرز
+  html+='<div class="home-section"><div class="home-section-title">أكثر الأسهم حركة</div><div class="movers-grid">';
+  html+='<div class="movers-card"><div class="movers-header" style="color:var(--green)">\u25b2 إيجابي — فوق Zero Gamma</div>';
+  bulls.forEach(function(d,i){
+    html+='<div class="mover-row" onclick="selectTicker(''+d.ticker+'')">'
+      +'<span class="mover-rank">'+(i+1)+'</span>'
+      +'<span class="mover-ticker">'+d.ticker+'</span>'
+      +'<span class="mover-price">'+d.spot.toLocaleString()+'</span>'
+      +'<span class="mover-badge ob-bull">إيجابي</span>'
+      +'<span class="mover-dist" style="color:var(--text3)">\u2194CW '+d.distCW+'%</span>'
+      +'</div>';
+  });
+  html+='</div>';
+  html+='<div class="movers-card"><div class="movers-header" style="color:var(--red)">\u25bc سلبي — تحت Zero Gamma</div>';
+  bears.forEach(function(d,i){
+    html+='<div class="mover-row" onclick="selectTicker(''+d.ticker+'')">'
+      +'<span class="mover-rank">'+(i+1)+'</span>'
+      +'<span class="mover-ticker">'+d.ticker+'</span>'
+      +'<span class="mover-price">'+d.spot.toLocaleString()+'</span>'
+      +'<span class="mover-badge ob-bear">سلبي</span>'
+      +'<span class="mover-dist" style="color:var(--text3)">\u2194PW '+d.distPW+'%</span>'
+      +'</div>';
+  });
+  html+='</div></div></div>';
+
+  // 4. أفضل العقود
+  html+='<div class="home-section" style="flex:1;padding-bottom:20px"><div class="home-section-title">أفضل العقود عبر الأسهم</div>'
+    +'<div style="border-radius:var(--radius-lg);border:1px solid var(--border);overflow:hidden">'
+    +'<table class="contracts-table"><thead><tr>'
+    +'<th>الرمز</th><th>Strike</th><th>النوع</th><th>الانتهاء</th><th>Open Interest</th><th>التقييم</th>'
+    +'</tr></thead><tbody>';
+  topContracts.forEach(function(c){
+    var oiStr=c.oi>=1000000?(c.oi/1000000).toFixed(2)+'M':c.oi.toLocaleString();
+    var stars=c.score>100000?'\u2605\u2605\u2605\u2605\u2605':c.score>50000?'\u2605\u2605\u2605\u2605\u2606':c.score>20000?'\u2605\u2605\u2605\u2606\u2606':'\u2605\u2605\u2606\u2606\u2606';
+    var quality=c.score>100000?'<span style="color:var(--green);font-weight:700;font-size:11px">ممتاز</span>':c.score>50000?'<span style="color:var(--gold);font-weight:700;font-size:11px">جيد</span>':'<span style="color:var(--text3);font-weight:600;font-size:11px">متوسط</span>';
+    html+='<tr onclick="selectTicker(''+c.ticker+'')">'
+      +'<td><span class="ct-ticker-big">'+c.ticker+'</span></td>'
+      +'<td><span class="ct-strike-big">'+c.strike+'</span></td>'
+      +'<td><span class="ct-type-pill '+(c.type==='call'?'ct-call-pill':'ct-put-pill')+'">'+c.type.toUpperCase()+'</span></td>'
+      +'<td style="color:var(--text3);font-size:11px">'+c.exp+'</td>'
+      +'<td><span class="ct-oi">'+oiStr+'</span></td>'
+      +'<td><span class="ct-stars">'+stars+'</span>\u00a0'+quality+'</td>'
+      +'</tr>';
+  });
+  html+='</tbody></table></div></div>';
+
+  panel.innerHTML=html;
+}
 
 function renderSidebar(ticker){
   const d=allData.find(x=>x.ticker===ticker);if(!d)return;
@@ -755,9 +1001,9 @@ function renderGammaCard(){
   var t=(master&&master.value)?master.value:'';
   var d=allData.find(function(x){return x.ticker===t;});
   var el=document.getElementById('ind-gamma-content');
-  if(!d||!el){if(el)el.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:30px">لا توجد بيانات</div>';return;}
+  if(!d||!el){if(el)el.innerHTML='<div style="color:#555;font-size:12px;text-align:center;padding:30px">لا توجد بيانات</div>';return;}
 
-  // بناء مستويات من intraday أو gl1-gl7
+  // بناء مستويات
   var levels=[];
   if(d.intradayRaw&&d.intradayRaw!=='—'&&d.intradayRaw.length>5){
     d.intradayRaw.split(',').forEach(function(pair){
@@ -769,77 +1015,89 @@ function renderGammaCard(){
       }
     });
   }
-  // fallback لـ gl1-gl7 إذا لا يوجد intraday
   if(levels.length===0){
     var glArr=[d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(function(x){return x>0;});
-    glArr.forEach(function(p,i){levels.push({price:p,gex:(i%2===0?1:-1)*(7-i)*10000});});
+    glArr.forEach(function(p,i){levels.push({price:p,gex:(i%2===0?1:-1)*(7-i)*100000});});
   }
-  if(!levels.length){el.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:30px">لا توجد بيانات</div>';return;}
+  if(!levels.length){el.innerHTML='<div style="color:#555;font-size:12px;text-align:center;padding:30px">لا توجد بيانات</div>';return;}
 
-  // ترتيب حسب السعر
   levels.sort(function(a,b){return a.price-b.price;});
-
   var spot=d.spot;
   var maxAbs=Math.max.apply(null,levels.map(function(p){return Math.abs(p.gex);}));
   if(maxAbs===0)maxAbs=1;
 
-  // أبعاد الشارت
-  var chartH=130; // ارتفاع كل جانب (أعلى/أسفل الصفر)
+  // أبعاد — بارات أعرض
   var n=levels.length;
-  // عرض الشارت = كامل الـ container
-  var containerW=el.parentElement?el.parentElement.clientWidth-28:800;
-  var barW=Math.max(12,Math.min(40,Math.floor(containerW/n)));
-  var totalW=Math.max(containerW,n*barW);
+  var containerW=el.parentElement?el.parentElement.clientWidth-28:900;
+  // نحسب عرض البار بحيث كل لابيل 5 أحرف مكسيمم
+  var barW=Math.max(20,Math.min(50,Math.floor(containerW/n)-2));
+  var totalW=Math.max(containerW,n*(barW+2));
+  var chartH=140;
 
-  // إيجاد أقرب بار للسعر الحالي
-  var closestIdx=0;
-  var minDist=Infinity;
-  levels.forEach(function(l,i){
-    var dist=Math.abs(l.price-spot);
-    if(dist<minDist){minDist=dist;closestIdx=i;}
-  });
+  var closestIdx=0;var minDist=Infinity;
+  levels.forEach(function(l,i){var dist=Math.abs(l.price-spot);if(dist<minDist){minDist=dist;closestIdx=i;}});
 
-  var html='<div id="gamma-chart-inner" style="display:flex;align-items:stretch;gap:1px;min-width:'+totalW+'px;padding:0 4px">';
+  // tooltip div
+  var tooltipId='gex-tooltip-'+Date.now();
+  var html='<div style="position:relative">'
+    +'<div id="'+tooltipId+'" style="position:fixed;display:none;background:#111;border:1px solid #444;border-radius:6px;padding:6px 12px;font-size:13px;font-weight:700;color:#fff;pointer-events:none;z-index:9999;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.6)"></div>';
+
+  html+='<div id="gamma-chart-inner" style="display:flex;align-items:stretch;gap:2px;min-width:'+totalW+'px;padding:0 4px">';
   levels.forEach(function(p,i){
     var pct=Math.min(1,Math.abs(p.gex)/maxAbs);
-    var barH=Math.max(4,Math.round(pct*chartH));
+    var barH=Math.max(5,Math.round(pct*chartH));
     var isSpot=i===closestIdx;
-    // ألوان: أخضر لـ Call GEX موجب، أحمر لـ Put GEX سالب، أزرق للسعر
-    var col=isSpot?'#4da6ff':(p.gex>=0?'#00CC44':'#FF3333');
-    var opacity=isSpot?'1':(Math.max(0.4,pct)*0.9+0.1).toFixed(2);
+    // ألوان واضحة جداً
+    var col=isSpot?'#4da6ff':(p.gex>=0?'#00DD55':'#FF4444');
+    var opacity=isSpot?'1':(0.5+pct*0.5).toFixed(2);
+
+    // لابيل: نعرض فقط كل Nth لتفادي التداخل
+    var showLbl=true;
+    if(n>30) showLbl=(i%3===0)||isSpot;
+    else if(n>20) showLbl=(i%2===0)||isSpot;
     var lbl=p.price>=1000?String(Math.round(p.price)):String(p.price);
+
+    var gexStr=Math.abs(p.gex)>=1000000?((p.gex>=0?'+':'-')+(Math.abs(p.gex)/1000000).toFixed(1)+'M')
+               :Math.abs(p.gex)>=1000?((p.gex>=0?'+':'-')+(Math.abs(p.gex)/1000).toFixed(0)+'K')
+               :(p.gex>=0?'+':'')+Math.round(p.gex);
+
     var upH=p.gex>=0?barH:0;
     var dnH=p.gex<0?barH:0;
 
-    html+='<div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:'+(barW-2)+'px;max-width:'+(barW+10)+'px">'
-      // منطقة فوق الصفر
+    var barStyle='style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:'+(barW)+'px;max-width:'+(barW+8)+'px;cursor:pointer"';
+    var onEnter='onmouseenter="var t=document.getElementById(\''+tooltipId+'\');t.style.display=\'block\';t.textContent=\''+lbl+' | '+gexStr+'\'"';
+    var onMove='onmousemove="var t=document.getElementById(\''+tooltipId+'\');t.style.left=(event.clientX+12)+\'px\';t.style.top=(event.clientY-28)+\'px\'"';
+    var onLeave='onmouseleave="document.getElementById(\''+tooltipId+'\').style.display=\'none\'"';
+
+    html+='<div '+barStyle+' '+onEnter+' '+onMove+' '+onLeave+'>'
+      // منطقة فوق
       +'<div style="height:'+chartH+'px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;width:100%">'
-      +(upH>0?'<div style="width:90%;height:'+upH+'px;background:'+col+';opacity:'+opacity+';border-radius:2px 2px 0 0;transition:height .3s"></div>':'')
+      +(upH>0?'<div style="width:85%;height:'+upH+'px;background:'+col+';opacity:'+opacity+';border-radius:2px 2px 0 0"></div>':'')
       +'</div>'
-      // خط الصفر + مؤشر السعر
-      +'<div style="height:2px;width:100%;background:'+(isSpot?'#4da6ff':'#222')+';position:relative">'
-      +(isSpot?'<div style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid #4da6ff"></div>':'')
+      // خط الصفر
+      +'<div style="height:2px;width:100%;background:'+(isSpot?'#4da6ff':'#2a2a2a')+';position:relative">'
+      +(isSpot?'<div style="position:absolute;top:-5px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #4da6ff"></div>':'')
       +'</div>'
-      // منطقة تحت الصفر
+      // منطقة تحت
       +'<div style="height:'+chartH+'px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;width:100%">'
-      +(dnH>0?'<div style="width:90%;height:'+dnH+'px;background:'+col+';opacity:'+opacity+';border-radius:0 0 2px 2px;transition:height .3s"></div>':'')
+      +(dnH>0?'<div style="width:85%;height:'+dnH+'px;background:'+col+';opacity:'+opacity+';border-radius:0 0 2px 2px"></div>':'')
       +'</div>'
-      // لابل السعر
-      +'<div style="font-size:'+(isSpot?'10':'8')+'px;color:'+(isSpot?'#4da6ff':'#444')+';font-weight:'+(isSpot?'700':'400')+';white-space:nowrap;margin-top:3px;text-align:center">'+lbl+'</div>'
+      // لابيل
+      +'<div style="font-size:'+(isSpot?'11':'9')+'px;color:'+(isSpot?'#4da6ff':'#777')+';font-weight:'+(isSpot?'800':'500')+';white-space:nowrap;margin-top:4px;text-align:center;overflow:hidden;width:100%">'
+      +(showLbl?lbl:'')
+      +'</div>'
       +'</div>';
   });
-  html+='</div>';
+  html+='</div></div>';
   el.innerHTML=html;
 
-  // تمرير للسعر الحالي بعد الرسم
+  // تمرير للسعر
   setTimeout(function(){
     var inner=document.getElementById('gamma-chart-inner');
     var parent=el;
     if(inner&&parent){
-      var barTotalW=inner.clientWidth;
-      var visibleW=parent.clientWidth;
-      var spotX=(closestIdx/n)*barTotalW;
-      parent.scrollLeft=Math.max(0,spotX-visibleW/2);
+      var spotX=(closestIdx/(n||1))*inner.scrollWidth;
+      parent.scrollLeft=Math.max(0,spotX-parent.clientWidth/2);
     }
   },80);
 }
@@ -959,28 +1217,30 @@ function renderFlow(){
     var prem=i.premium>=1000000?'$'+(i.premium/1000000).toFixed(2)+'M':'$'+(Math.round(i.premium/1000))+'K';
     var isGiant=i.premium>=1000000;
     var isBig=i.premium>=500000;
-    var bgCol=isGiant?'#1a1000':isBig?'#0f0f0f':'#0a0a0a';
-    var borderCol=i.type==='call'?'#00CC44':'#FF3333';
-    var typeIcon=i.type==='call'?'🟢':'🔴';
-    return '<div class="flow-item flow-'+i.type+'" style="background:'+bgCol+';border-left:3px solid '+borderCol+';padding:10px 14px;margin:2px 0;border-radius:4px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
-      // يسار: نوع + معلومات
-      +'<div style="display:flex;align-items:center;gap:12px;min-width:0">'
-      +'<div style="text-align:center;flex-shrink:0">'
-      +'<div style="font-size:18px">'+typeIcon+'</div>'
-      +'<div style="font-size:10px;font-weight:700;color:'+(i.type==='call'?'#00CC44':'#FF3333')+'">'+i.type.toUpperCase()+'</div>'
+    var isCall=i.type==='call';
+    var borderCol=isCall?'#00DD55':'#FF4444';
+    var bgCol=isGiant?(isCall?'#0d1f10':'#1f0d0d'):(isCall?'#0a1510':'#150a0a');
+    var typeCol=isCall?'#00DD55':'#FF4444';
+    var typeBg=isCall?'#0d2810':'#280d0d';
+    var premCol=isGiant?'#FFB800':(isCall?'#00DD55':'#FF5555');
+    return '<div style="background:'+bgCol+';border-left:4px solid '+borderCol+';padding:11px 16px;margin:0 0 4px;border-radius:5px;display:flex;align-items:center;justify-content:space-between;gap:10px">'
+      // يسار
+      +'<div style="display:flex;align-items:center;gap:14px;min-width:0">'
+      +'<div style="background:'+typeBg+';border:1px solid '+borderCol+';border-radius:6px;padding:5px 10px;flex-shrink:0;text-align:center">'
+      +'<div style="font-size:13px;font-weight:800;color:'+typeCol+';letter-spacing:1px">'+i.type.toUpperCase()+'</div>'
       +'</div>'
       +'<div style="min-width:0">'
-      +'<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">'
-      +'<span style="font-size:16px;font-weight:800;color:#fff;letter-spacing:0.5px">'+i.ticker+'</span>'
-      +'<span style="font-size:14px;font-weight:600;color:#ccc">'+i.strike+'</span>'
-      +'<span style="font-size:11px;color:#666;background:#161616;padding:1px 6px;border-radius:3px">'+i.exp+'</span>'
+      +'<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">'
+      +'<span style="font-size:18px;font-weight:800;color:#ffffff">'+i.ticker+'</span>'
+      +'<span style="font-size:16px;font-weight:700;color:#e0e0e0">'+i.strike+'</span>'
+      +'<span style="font-size:12px;font-weight:600;color:#aaaaaa;background:#1e1e1e;border:0.5px solid #333;padding:2px 8px;border-radius:4px">'+i.exp+'</span>'
+      +(isGiant?'<span style="font-size:11px;font-weight:700;color:#FFB800;background:#2a1e00;border:0.5px solid #FFB800;padding:2px 8px;border-radius:4px">🔥 عملاق</span>':'')
       +'</div>'
-      +'<div style="font-size:11px;color:#555;margin-top:3px">'+i.time+' &nbsp;·&nbsp; '+i.size.toLocaleString()+' عقد &nbsp;·&nbsp; $'+i.price.toFixed(2)+'/عقد</div>'
+      +'<div style="font-size:12px;color:#888888;margin-top:4px;letter-spacing:0.3px">'+i.time+' · '+i.size.toLocaleString()+' عقد · $'+i.price.toFixed(2)+'/عقد</div>'
       +'</div></div>'
-      // يمين: قيمة + مميز
-      +'<div style="text-align:left;flex-shrink:0">'
-      +'<div style="font-size:'+(isGiant?'20':isBig?'17':'14')+'px;font-weight:800;color:'+(isGiant?'#FFA500':'#fff')+'">'+prem+'</div>'
-      +(isGiant?'<div style="font-size:10px;color:#FFA500;text-align:center">🔥 عملاق</div>':'')
+      // يمين: الحجم
+      +'<div style="flex-shrink:0;text-align:left">'
+      +'<div style="font-size:'+(isGiant?'22':isBig?'19':'16')+'px;font-weight:800;color:'+premCol+'">'+prem+'</div>'
       +'</div>'
       +'</div>';
   }).join('');
