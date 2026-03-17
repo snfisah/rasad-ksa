@@ -174,7 +174,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
   <button class="scroll-btn" onclick="scrollTickers(120)">&#8249;</button>
   <div class="search-wrap" style="padding:0 8px">
     <input class="search-box" id="ticker-search" placeholder="🔍 بحث..." autocomplete="off"
-      oninput="onSearch(this.value)" onblur="setTimeout(()=>hideSearch(),200)">
+      oninput="onSearch(this.value)" onblur="setTimeout(()=>hideSearch(),300)"
+      onkeydown="onSearchKey(event)">
     <div class="search-drop" id="search-drop" style="display:none"></div>
   </div>
 </div>
@@ -209,15 +210,19 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
   <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:#0d0d0d;border-bottom:0.5px solid #1e1e1e;flex-shrink:0">
     <span style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px">الرمز</span>
     <select class="ind-select" id="sel-ind-master" onchange="onMasterSelect(this.value)" style="font-size:12px;padding:4px 10px"></select>
-    <span id="ind-spot-badge" style="font-size:12px;color:#4da6ff;font-weight:600"></span>
+    <span id="ind-spot-badge" style="font-size:13px;color:#4da6ff;font-weight:700"></span>
   </div>
   <!-- Gamma Profile — عرض كامل -->
   <div style="flex-shrink:0;padding:12px 14px 0;background:#0a0a0a">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <span style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;font-weight:600">Gamma Profile</span>
-      <span style="font-size:9px;color:#333">أخضر↑ Call GEX &nbsp; أحمر↓ Put GEX &nbsp; <span style="color:#4da6ff">أزرق = السعر</span></span>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1px;font-weight:600">Gamma Profile</span>
+      <div style="display:flex;gap:14px;font-size:9px;color:#444">
+        <span><span style="color:#00CC44">▲</span> Call GEX</span>
+        <span><span style="color:#FF4444">▼</span> Put GEX</span>
+        <span><span style="color:#4da6ff">|</span> السعر الحالي</span>
+      </div>
     </div>
-    <div id="ind-gamma-content" style="overflow-x:auto;padding-bottom:4px"></div>
+    <div id="ind-gamma-content" style="width:100%;overflow-x:auto;padding-bottom:6px"></div>
   </div>
   <!-- الكاردز الأربعة في صف واحد -->
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 14px;overflow-y:auto;flex:1">
@@ -243,24 +248,38 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
 <!-- Option Flow Panel -->
 <div id="view-flow" style="display:none;flex:1;flex-direction:column;overflow:hidden">
   <div class="flow-header">
-    <div style="display:flex;gap:8px;align-items:center">
-      <span style="font-size:11px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:1px">Option Flow — Unusual Activity</span>
-      <span class="ws-badge ws-off" id="flow-badge" style="font-size:9px">⬤ OFF</span>
+    <!-- صف أول: عنوان + حالة + أزرار تحكم -->
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:12px;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:1px">📊 Option Flow</span>
+      <span class="ws-badge ws-off" id="flow-badge" style="font-size:10px;padding:2px 8px">⬤ OFF</span>
+      <!-- زر Connect/Pause/Stop -->
+      <button id="flow-btn-connect" onclick="startFlow()" style="padding:4px 14px;background:#FFA500;border:none;border-radius:5px;color:#000;font-weight:700;cursor:pointer;font-size:11px">▶ Connect</button>
+      <button id="flow-btn-pause"   onclick="pauseFlow()" style="display:none;padding:4px 14px;background:#2a2a2a;border:1px solid #444;border-radius:5px;color:#aaa;font-weight:700;cursor:pointer;font-size:11px">⏸ إيقاف مؤقت</button>
+      <button id="flow-btn-stop"    onclick="stopFlow()"  style="display:none;padding:4px 14px;background:#1a1a1a;border:1px solid #333;border-radius:5px;color:#666;font-weight:700;cursor:pointer;font-size:11px">⏹ قطع</button>
+      <button onclick="clearFlow()" style="padding:4px 12px;background:#1a1a1a;border:1px solid #222;border-radius:5px;color:#555;font-size:11px;cursor:pointer">✕ مسح</button>
     </div>
-    <div style="display:flex;gap:6px;align-items:center">
-      <select id="flow-ticker-filter" class="ind-select" onchange="filterFlow()">
-        <option value="">كل الأسهم</option>
+    <!-- صف ثاني: الفلاتر -->
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">
+      <span style="font-size:10px;color:#555">📌 الرمز:</span>
+      <select id="flow-ticker-filter" class="ind-select" onchange="filterFlow()" style="font-size:11px;min-width:80px">
+        <option value="">الكل</option>
       </select>
-      <select id="flow-type-filter" class="ind-select" onchange="filterFlow()">
-        <option value="">كل العقود</option>
-        <option value="call">CALL فقط</option>
-        <option value="put">PUT فقط</option>
+      <span style="font-size:10px;color:#555">📋 النوع:</span>
+      <select id="flow-type-filter" class="ind-select" onchange="filterFlow()" style="font-size:11px">
+        <option value="">الكل</option>
+        <option value="call">🟢 CALL</option>
+        <option value="put">🔴 PUT</option>
       </select>
-      <button class="f-btn" onclick="clearFlow()" style="font-size:10px;padding:3px 8px">✕ مسح</button>
+      <span style="font-size:10px;color:#555">💰 الحد:</span>
+      <select id="flow-min-filter" class="ind-select" onchange="filterFlow()" style="font-size:11px">
+        <option value="500000">+$500K</option>
+        <option value="1000000">+$1M</option>
+        <option value="250000">+$250K</option>
+      </select>
     </div>
   </div>
   <div class="flow-panel" id="flow-list">
-    <div class="flow-empty">أبدأ تشغيل الـ Flow من زر الاتصال</div>
+    <div class="flow-empty">اضغط <strong>Connect</strong> لبدء استقبال الصفقات الكبيرة</div>
   </div>
 </div>
 
@@ -307,7 +326,35 @@ const SHEET_ID = '1kS31BVYSn_xEPCtsOOeebMZuOyDS3OpQaE1Sv8ZR1wU';
 const CSV_URL  = 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv&gid=0');
 const POLY_MAP = {SPX:'I:SPX',SPY:'SPY',QQQ:'QQQ',IWM:'IWM',GLD:'GLD',TLT:'TLT',AAPL:'AAPL',MSFT:'MSFT',NVDA:'NVDA',AMZN:'AMZN',GOOGL:'GOOGL',META:'META',TSLA:'TSLA',NFLX:'NFLX',AMD:'AMD',AVGO:'AVGO',JPM:'JPM',BAC:'BAC',GS:'GS',V:'V',MA:'MA',UNH:'UNH',LLY:'LLY',XOM:'XOM'};
 
-let allData=[],selectedTicker=null,currentView='overview',currentTF='5',chart=null,candleSeries=null,chartLoaded=false;
+// بيانات أولية — تظهر فوراً قبل تحميل الشيت
+const SEED_DATA=[
+  {ticker:'SPX',spot:6690.3,callWall:6800,putWall:6590,zeroGamma:6690,topGamma:6800,dCall:92.33,dPut:-6.16,theta:-778.47,vega:118.15,oiCall:2562754,oiPut:1320874,pcRatio:0.52,c1:'6700 CALL 03/20 | 40,351',c2:'6800 CALL 03/20 | 54,460',c3:'6750 CALL 03/20 | 21,566',gl1:6800,gl2:6700,gl3:6850,gl4:6750,gl5:6900,gl6:7000,gl7:6775,intradayRaw:'6600:-5207444.0,6625:-1992737.0,6650:-5176094.0,6675:-1816396.0,6700:-1087230.0,6715:2108178.0,6725:925264.0,6735:1342512.0,6750:5681702.0,6760:5611594.0,6770:5685540.0,6780:4732248.0,6800:438059.0',updatedAt:'2026-03-17 16:14'},
+  {ticker:'SPY',spot:669.03,callWall:672,putWall:660,zeroGamma:669,topGamma:672,dCall:16.54,dPut:-53.19,theta:-240.5,vega:40.58,oiCall:1742564,oiPut:3327484,pcRatio:1.91,c1:'660 PUT 03/20 | 164,508',c2:'685 PUT 03/20 | 45,041',c3:'675 PUT 03/20 | 56,706',gl1:660,gl2:650,gl3:645,gl4:655,gl5:672,gl6:673,gl7:685,intradayRaw:'660:-2139611.0,661:-406572.0,662:-646531.0,663:-540437.0,664:-515220.0,665:-1117636.0,667:-1230741.0,668:-1609476.0,669:1578546.0,670:2002222.0,671:2412964.0,672:2852096.0,675:2792953.0',updatedAt:'2026-03-17 16:15'},
+  {ticker:'QQQ',spot:600.38,callWall:605,putWall:590,zeroGamma:600,topGamma:605,dCall:16.71,dPut:-29.4,theta:-130.4,vega:22.91,oiCall:1302188,oiPut:1754155,pcRatio:1.35,c1:'600 PUT 03/20 | 92,037',c2:'600 CALL 03/20 | 47,733',c3:'615 PUT 03/20 | 29,308',gl1:590,gl2:605,gl3:580,gl4:610,gl5:595,gl6:602,gl7:609,intradayRaw:'590:-592572.0,595:-921622.0,598:-705181.0,599:-405852.0,600:1197579.0,601:319248.0,602:1678287.0,604:1732311.0,605:1975555.0,607:1239680.0,609:1597546.0,610:887742.0',updatedAt:'2026-03-17 16:15'},
+  {ticker:'IWM',spot:248.92,callWall:260,putWall:240,zeroGamma:249,topGamma:260,dCall:20.48,dPut:-72.18,theta:-112.11,vega:25.93,oiCall:1314673,oiPut:3044318,pcRatio:2.32,c1:'250 PUT 03/20 | 104,090',c2:'240 PUT 03/20 | 210,347',c3:'249 PUT 03/20 | 56,523',gl1:240,gl2:245,gl3:235,gl4:248,gl5:246,gl6:244,gl7:250,intradayRaw:'240:-240769.0,241:-51626.0,242:-60519.0,244:-58102.0,245:-144208.0,246:-69392.0,247:-110517.0,248:42231.0,249:68947.0,250:287106.0,251:204806.0,253:72374.0,260:4271.0',updatedAt:'2026-03-17 16:15'},
+  {ticker:'GLD',spot:460.43,callWall:495,putWall:460,zeroGamma:460,topGamma:495,dCall:42.45,dPut:-9.8,theta:-49.66,vega:12,oiCall:1149799,oiPut:728995,pcRatio:0.63,c1:'460 PUT 03/20 | 24,276',c2:'460 CALL 03/20 | 21,290',c3:'465 CALL 03/20 | 20,277',gl1:495,gl2:510,gl3:465,gl4:475,gl5:480,gl6:490,gl7:460,intradayRaw:'—',updatedAt:'2026-03-17 16:15'},
+  {ticker:'TLT',spot:87.21,callWall:90,putWall:85,zeroGamma:87,topGamma:90,dCall:77.18,dPut:-84.89,theta:-9.19,vega:75.4,oiCall:4142430,oiPut:2703660,pcRatio:0.65,c1:'87 CALL 03/20 | 53,878',c2:'85 CALL 01/15 | 59,578',c3:'89 PUT 03/20 | 40,227',gl1:90,gl2:85,gl3:86,gl4:91,gl5:95,gl6:92,gl7:87,intradayRaw:'—',updatedAt:'2026-03-17 16:15'},
+  {ticker:'AAPL',spot:252.82,callWall:260,putWall:250,zeroGamma:252.5,topGamma:260,dCall:40.25,dPut:-32.37,theta:-23.07,vega:62.75,oiCall:1885152,oiPut:1273002,pcRatio:0.68,c1:'240 CALL 05/15 | 41,178',c2:'260 PUT 03/20 | 17,022',c3:'260 PUT 04/17 | 19,508',gl1:250,gl2:260,gl3:245,gl4:280,gl5:275,gl6:285,gl7:295,intradayRaw:'—',updatedAt:'2026-03-17 16:16'},
+  {ticker:'MSFT',spot:399.95,callWall:410,putWall:380,zeroGamma:400,topGamma:410,dCall:17.56,dPut:-23.32,theta:-26.53,vega:45.47,oiCall:1278958,oiPut:676733,pcRatio:0.53,c1:'445 CALL 05/15 | 41,206',c2:'405 PUT 03/20 | 9,199',c3:'450 PUT 06/18 | 7,721',gl1:410,gl2:380,gl3:390,gl4:415,gl5:445,gl6:400,gl7:370,intradayRaw:'—',updatedAt:'2026-03-17 16:16'},
+  {ticker:'NVDA',spot:183.22,callWall:190,putWall:170,zeroGamma:183,topGamma:190,dCall:121.23,dPut:-59.84,theta:-105.03,vega:86.05,oiCall:5162795,oiPut:4274600,pcRatio:0.83,c1:'185 CALL 03/20 | 113,001',c2:'190 CALL 03/20 | 183,834',c3:'185 PUT 03/20 | 71,850',gl1:190,gl2:200,gl3:185,gl4:195,gl5:187.5,gl6:170,gl7:175,intradayRaw:'—',updatedAt:'2026-03-17 16:16'},
+  {ticker:'AMZN',spot:211.74,callWall:215,putWall:200,zeroGamma:212.5,topGamma:215,dCall:61.59,dPut:-41.56,theta:-32.61,vega:107.39,oiCall:2412052,oiPut:1679300,pcRatio:0.7,c1:'220 PUT 03/20 | 19,639',c2:'215 CALL 03/20 | 31,466',c3:'200 CALL 05/15 | 17,778',gl1:215,gl2:220,gl3:200,gl4:230,gl5:217.5,gl6:225,gl7:250,intradayRaw:'—',updatedAt:'2026-03-17 16:16'},
+  {ticker:'GOOGL',spot:305.56,callWall:310,putWall:290,zeroGamma:305,topGamma:310,dCall:22.33,dPut:-12.13,theta:-19.04,vega:24.91,oiCall:912555,oiPut:801145,pcRatio:0.88,c1:'310 CALL 03/20 | 20,565',c2:'310 PUT 04/02 | 10,798',c3:'310 CALL 05/15 | 10,323',gl1:310,gl2:345,gl3:315,gl4:320,gl5:307.5,gl6:290,gl7:312.5,intradayRaw:'—',updatedAt:'2026-03-17 16:17'},
+  {ticker:'META',spot:627.45,callWall:650,putWall:600,zeroGamma:627.5,topGamma:650,dCall:4.09,dPut:-5.87,theta:-24.23,vega:5.62,oiCall:335570,oiPut:227594,pcRatio:0.68,c1:'630 CALL 03/20 | 6,747',c2:'630 PUT 03/20 | 5,642',c3:'635 PUT 03/20 | 3,883',gl1:600,gl2:650,gl3:635,gl4:680,gl5:615,gl6:660,gl7:655,intradayRaw:'—',updatedAt:'2026-03-17 16:17'},
+  {ticker:'TSLA',spot:395.56,callWall:410,putWall:380,zeroGamma:395,topGamma:410,dCall:13.81,dPut:-12.12,theta:-53.04,vega:12.72,oiCall:1369341,oiPut:874634,pcRatio:0.64,c1:'400 PUT 03/20 | 14,773',c2:'400 CALL 03/20 | 14,131',c3:'410 CALL 03/20 | 23,749',gl1:410,gl2:405,gl3:380,gl4:420,gl5:415,gl6:390,gl7:407.5,intradayRaw:'—',updatedAt:'2026-03-17 16:17'},
+  {ticker:'NFLX',spot:95.2,callWall:100,putWall:94,zeroGamma:95,topGamma:100,dCall:55.69,dPut:-23.67,theta:-14.23,vega:16.93,oiCall:1713742,oiPut:1428685,pcRatio:0.83,c1:'100 CALL 05/15 | 64,390',c2:'100 CALL 06/18 | 46,476',c3:'110 PUT 06/18 | 18,839',gl1:100,gl2:105,gl3:115,gl4:97,gl5:110,gl6:94,gl7:93,intradayRaw:'—',updatedAt:'2026-03-17 16:17'},
+  {ticker:'AMD',spot:196.58,callWall:205,putWall:190,zeroGamma:197.5,topGamma:205,dCall:29.79,dPut:-29.04,theta:-33.06,vega:45.92,oiCall:1239703,oiPut:1368839,pcRatio:1.1,c1:'200 PUT 03/20 | 23,963',c2:'200 CALL 05/15 | 20,245',c3:'200 PUT 06/18 | 14,564',gl1:190,gl2:180,gl3:170,gl4:205,gl5:200,gl6:175,gl7:177.5,intradayRaw:'—',updatedAt:'2026-03-17 16:17'},
+  {ticker:'AVGO',spot:324.92,callWall:350,putWall:310,zeroGamma:325,topGamma:350,dCall:14.45,dPut:-14.5,theta:-33.77,vega:29.29,oiCall:642326,oiPut:725671,pcRatio:1.13,c1:'300 CALL 06/18 | 27,610',c2:'340 PUT 03/20 | 6,695',c3:'350 PUT 03/20 | 5,275',gl1:310,gl2:350,gl3:300,gl4:340,gl5:320,gl6:312.5,gl7:335,intradayRaw:'—',updatedAt:'2026-03-17 16:18'},
+  {ticker:'JPM',spot:286.16,callWall:320,putWall:275,zeroGamma:285,topGamma:320,dCall:7.88,dPut:-9.97,theta:-8.05,vega:24.52,oiCall:328237,oiPut:369060,pcRatio:1.12,c1:'280 CALL 06/18 | 3,800',c2:'275 PUT 04/17 | 6,947',c3:'250 PUT 05/15 | 13,199',gl1:275,gl2:280,gl3:320,gl4:250,gl5:270,gl6:285,gl7:260,intradayRaw:'—',updatedAt:'2026-03-17 16:18'},
+  {ticker:'BAC',spot:47.06,callWall:55,putWall:45,zeroGamma:47,topGamma:55,dCall:33.33,dPut:-45.61,theta:-4.69,vega:20.15,oiCall:1258195,oiPut:1419048,pcRatio:1.13,c1:'47 PUT 06/18 | 51,858',c2:'47 CALL 01/15 | 25,599',c3:'45 PUT 01/15 | 35,768',gl1:45,gl2:55,gl3:47,gl4:40,gl5:48,gl6:57.5,gl7:60,intradayRaw:'—',updatedAt:'2026-03-17 16:18'},
+  {ticker:'GS',spot:794.77,callWall:810,putWall:770,zeroGamma:795,topGamma:810,dCall:1.09,dPut:-2.43,theta:-11,vega:4.98,oiCall:77342,oiPut:78073,pcRatio:1.01,c1:'845 PUT 03/20 | 972',c2:'800 PUT 03/20 | 1,180',c3:'800 PUT 04/17 | 1,139',gl1:770,gl2:750,gl3:740,gl4:810,gl5:830,gl6:900,gl7:760,intradayRaw:'—',updatedAt:'2026-03-17 16:18'},
+  {ticker:'V',spot:310.11,callWall:330,putWall:300,zeroGamma:310,topGamma:330,dCall:3.45,dPut:-7.13,theta:-3.67,vega:15.12,oiCall:183058,oiPut:183916,pcRatio:1,c1:'310 PUT 03/20 | 3,688',c2:'315 PUT 03/20 | 2,074',c3:'315 PUT 06/18 | 2,205',gl1:300,gl2:310,gl3:295,gl4:305,gl5:290,gl6:315,gl7:330,intradayRaw:'—',updatedAt:'2026-03-17 16:18'},
+  {ticker:'MA',spot:508.5,callWall:525,putWall:500,zeroGamma:507.5,topGamma:525,dCall:0.9,dPut:-1.94,theta:-2.59,vega:5.21,oiCall:50047,oiPut:57654,pcRatio:1.15,c1:'520 PUT 03/20 | 762',c2:'500 PUT 03/20 | 1,650',c3:'480 PUT 05/15 | 1,626',gl1:500,gl2:480,gl3:490,gl4:505,gl5:510,gl6:450,gl7:470,intradayRaw:'—',updatedAt:'2026-03-17 16:19'},
+  {ticker:'UNH',spot:285.49,callWall:300,putWall:270,zeroGamma:285,topGamma:300,dCall:15.04,dPut:-13.9,theta:-10.59,vega:46.37,oiCall:743113,oiPut:474884,pcRatio:0.64,c1:'300 CALL 01/15 | 11,716',c2:'300 PUT 01/15 | 8,202',c3:'280 PUT 06/18 | 9,036',gl1:300,gl2:270,gl3:280,gl4:290,gl5:295,gl6:350,gl7:200,intradayRaw:'—',updatedAt:'2026-03-17 16:19'},
+  {ticker:'LLY',spot:989.12,callWall:1100,putWall:980,zeroGamma:990,topGamma:1100,dCall:2.84,dPut:-1.73,theta:-13.95,vega:10.13,oiCall:84737,oiPut:131834,pcRatio:1.56,c1:'1000 PUT 03/20 | 1,465',c2:'980 PUT 03/20 | 1,358',c3:'1000 PUT 04/17 | 1,129',gl1:980,gl2:1000,gl3:920,gl4:950,gl5:940,gl6:900,gl7:1100,intradayRaw:'—',updatedAt:'2026-03-17 16:19'},
+  {ticker:'XOM',spot:157.23,callWall:160,putWall:145,zeroGamma:157.5,topGamma:160,dCall:42.35,dPut:-5.38,theta:-6.4,vega:27.06,oiCall:769721,oiPut:572921,pcRatio:0.74,c1:'160 CALL 04/17 | 19,193',c2:'165 CALL 05/15 | 21,924',c3:'155 CALL 03/20 | 10,230',gl1:160,gl2:165,gl3:155,gl4:170,gl5:157.5,gl6:162.5,gl7:175,intradayRaw:'—',updatedAt:'2026-03-17 16:19'}
+];
+
+let allData=SEED_DATA.slice(),selectedTicker=null,currentView='overview',currentTF='5',chart=null,candleSeries=null,chartLoaded=false;
 
 // ══════════════════════════════════════
 //   WebSocket — بيانات حية من Polygon
@@ -373,18 +420,26 @@ function wsConnect(){
 function wsSubscribe(ticker){
   wsSubTicker=ticker;
   if(!ws||ws.readyState!==1)return;
-  // الرمز المناسب لـ WebSocket (SPX لا يدعمه — نستخدم SPY)
-  const sym=ticker==='SPX'?'SPY':(POLY_MAP[ticker]||ticker);
   ws.send(JSON.stringify({action:'unsubscribe',params:'A.*'}));
-  ws.send(JSON.stringify({action:'subscribe',params:'A.'+sym}));
-  console.log('[WS] اشتراك في A.'+sym);
+  ws.send(JSON.stringify({action:'unsubscribe',params:'AM.*'}));
+  if(ticker==='SPX'){
+    // نجرب الاشتراك في indices channel لـ SPX
+    ws.send(JSON.stringify({action:'subscribe',params:'AM.I:SPX'}));
+    console.log('[WS] اشتراك في AM.I:SPX (indices)');
+  } else {
+    const sym=POLY_MAP[ticker]||ticker;
+    ws.send(JSON.stringify({action:'subscribe',params:'A.'+sym}));
+    console.log('[WS] اشتراك في A.'+sym);
+  }
 }
 
 function handleLiveTick(msg){
   if(!candleSeries||!selectedTicker)return;
-  const mult=selectedTicker==='SPX'?10:1;
+  // SPX: إذا جاء من indices (sym يحتوي I:SPX) نستخدمه مباشرة بدون ضرب ×10
+  const isIdxSPX = (msg.sym==='I:SPX'||msg.T==='I:SPX');
+  const mult=(selectedTicker==='SPX'&&!isIdxSPX)?10:1;
   // Polygon A.* fields: c=close, o=open, h=high, l=low, s=start ms, e=end ms
-  const rawClose=msg.c??msg.vw??0;
+  const rawClose=msg.c??msg.vw??msg.val??0;
   const price=+(parseFloat(rawClose)*mult).toFixed(2);
   if(!price||isNaN(price)||price<=0)return;
 
@@ -657,14 +712,33 @@ function renderAllIndicators(){
 // ══════════════════════════════════════
 //   بحث التيكر
 // ══════════════════════════════════════
+var searchHighlight=0;
 function onSearch(val){
+  searchHighlight=0;
   const drop=document.getElementById('search-drop');
   if(!val.trim()){drop.style.display='none';return;}
-  const q=val.toUpperCase();
-  const matches=allData.filter(d=>d.ticker.startsWith(q)||d.ticker.includes(q)).slice(0,8);
+  const q=val.toUpperCase().trim();
+  const matches=allData.filter(function(d){return d.ticker.startsWith(q)||d.ticker.includes(q);}).slice(0,10);
   if(!matches.length){drop.style.display='none';return;}
-  drop.innerHTML=matches.map(function(d){return '<div class="search-drop-item" onmousedown="pickSearch(\''+d.ticker+'\')">'+d.ticker+' <span style="color:#555;font-size:10px">'+d.spot+'</span></div>';}).join('');
+  drop.innerHTML=matches.map(function(d,i){
+    return '<div class="search-drop-item" data-idx="'+i+'" data-ticker="'+d.ticker+'"'
+      +' onmousedown="pickSearch(\''+d.ticker+'\')">'
+      +d.ticker+' <span style="color:#555;font-size:10px">'+d.spot.toLocaleString()+'</span>'
+      +'</div>';
+  }).join('');
   drop.style.display='block';
+}
+function onSearchKey(e){
+  const drop=document.getElementById('search-drop');
+  const items=drop.querySelectorAll('.search-drop-item');
+  if(!items.length)return;
+  if(e.key==='ArrowDown'){e.preventDefault();searchHighlight=Math.min(searchHighlight+1,items.length-1);updateSearchHL(items);}
+  else if(e.key==='ArrowUp'){e.preventDefault();searchHighlight=Math.max(searchHighlight-1,0);updateSearchHL(items);}
+  else if(e.key==='Enter'){e.preventDefault();const t=items[searchHighlight]?.dataset?.ticker;if(t)pickSearch(t);}
+  else if(e.key==='Escape'){hideSearch();}
+}
+function updateSearchHL(items){
+  items.forEach(function(el,i){el.style.background=i===searchHighlight?'#1e1e1e':'';el.style.color=i===searchHighlight?'#fff':'#aaa';});
 }
 function pickSearch(ticker){
   document.getElementById('ticker-search').value='';
@@ -678,45 +752,46 @@ function hideSearch(){document.getElementById('search-drop').style.display='none
 // ══════════════════════════════════════
 function renderGammaCard(){
   var master=document.getElementById('sel-ind-master');
-  var sel=document.getElementById('sel-gamma');
-  var t=(master&&master.value)?master.value:(sel?sel.value:'');
+  var t=(master&&master.value)?master.value:'';
   var d=allData.find(function(x){return x.ticker===t;});
   var el=document.getElementById('ind-gamma-content');
-  if(!d||!el){if(el)el.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:20px">لا توجد بيانات</div>';return;}
+  if(!d||!el){if(el)el.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:30px">لا توجد بيانات</div>';return;}
 
-  // استخدام فقط GEX Levels الرئيسية (gl1-gl7) — لا intraday
+  // بناء مستويات من intraday أو gl1-gl7
   var levels=[];
-  var spot=d.spot;
-  var glArr=[
-    {p:d.gl1,v:1},{p:d.gl2,v:2},{p:d.gl3,v:3},{p:d.gl4,v:4},
-    {p:d.gl5,v:5},{p:d.gl6,v:6},{p:d.gl7,v:7}
-  ].filter(function(x){return x.p>0;});
-
-  // إذا كان عنده intraday نستخدمه لقيم القوة
-  var intraMap={};
   if(d.intradayRaw&&d.intradayRaw!=='—'&&d.intradayRaw.length>5){
     d.intradayRaw.split(',').forEach(function(pair){
       var pts=pair.split(':');
       if(pts.length===2){
         var strike=parseFloat(pts[0]);
         var gex=parseFloat(pts[1]);
-        if(strike&&!isNaN(gex)) intraMap[strike]=gex;
+        if(strike>0&&!isNaN(gex)&&gex!==0) levels.push({price:strike,gex:gex});
       }
     });
   }
-
-  // بناء مستويات الرسم
-  glArr.forEach(function(g){
-    var gex=intraMap[g.p]||g.v;
-    levels.push({price:g.p,gex:gex});
-  });
-
-  if(!levels.length){el.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:20px">لا توجد بيانات</div>';return;}
+  // fallback لـ gl1-gl7 إذا لا يوجد intraday
+  if(levels.length===0){
+    var glArr=[d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(function(x){return x>0;});
+    glArr.forEach(function(p,i){levels.push({price:p,gex:(i%2===0?1:-1)*(7-i)*10000});});
+  }
+  if(!levels.length){el.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:30px">لا توجد بيانات</div>';return;}
 
   // ترتيب حسب السعر
   levels.sort(function(a,b){return a.price-b.price;});
 
-  // إيجاد مستوى أقرب للسعر الحالي — للتمركز
+  var spot=d.spot;
+  var maxAbs=Math.max.apply(null,levels.map(function(p){return Math.abs(p.gex);}));
+  if(maxAbs===0)maxAbs=1;
+
+  // أبعاد الشارت
+  var chartH=130; // ارتفاع كل جانب (أعلى/أسفل الصفر)
+  var n=levels.length;
+  // عرض الشارت = كامل الـ container
+  var containerW=el.parentElement?el.parentElement.clientWidth-28:800;
+  var barW=Math.max(12,Math.min(40,Math.floor(containerW/n)));
+  var totalW=Math.max(containerW,n*barW);
+
+  // إيجاد أقرب بار للسعر الحالي
   var closestIdx=0;
   var minDist=Infinity;
   levels.forEach(function(l,i){
@@ -724,25 +799,33 @@ function renderGammaCard(){
     if(dist<minDist){minDist=dist;closestIdx=i;}
   });
 
-  var maxAbs=Math.max.apply(null,levels.map(function(p){return Math.abs(p.gex);}));
-  var chartH=110;
-  var barW=Math.max(28,Math.floor((window.innerWidth-40)/Math.max(levels.length,1)));
-  barW=Math.min(barW,52);
-
-  var html='<div style="display:flex;align-items:stretch;gap:2px;overflow-x:auto;padding-bottom:20px;min-height:'+(chartH*2+24)+'px;justify-content:center">';
+  var html='<div id="gamma-chart-inner" style="display:flex;align-items:stretch;gap:1px;min-width:'+totalW+'px;padding:0 4px">';
   levels.forEach(function(p,i){
     var pct=Math.min(1,Math.abs(p.gex)/maxAbs);
-    var barH=Math.max(3,Math.round(pct*chartH));
+    var barH=Math.max(4,Math.round(pct*chartH));
     var isSpot=i===closestIdx;
-    var col=isSpot?'#4da6ff':p.gex>=0?'#00CC44':'#FF4444';
+    // ألوان: أخضر لـ Call GEX موجب، أحمر لـ Put GEX سالب، أزرق للسعر
+    var col=isSpot?'#4da6ff':(p.gex>=0?'#00CC44':'#FF3333');
+    var opacity=isSpot?'1':(Math.max(0.4,pct)*0.9+0.1).toFixed(2);
     var lbl=p.price>=1000?String(Math.round(p.price)):String(p.price);
-    var upBar=p.gex>=0?'<div style="height:'+barH+'px;width:'+(barW-4)+'px;background:'+col+';border-radius:2px 2px 0 0"></div>':'<div style="width:'+(barW-4)+'px"></div>';
-    var dnBar=p.gex<0?'<div style="height:'+barH+'px;width:'+(barW-4)+'px;background:'+col+';border-radius:0 0 2px 2px"></div>':'<div style="width:'+(barW-4)+'px"></div>';
-    html+='<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:'+barW+'px">'
-      +'<div style="height:'+chartH+'px;display:flex;align-items:flex-end">'+upBar+'</div>'
-      +'<div style="height:2px;width:'+barW+'px;background:'+(isSpot?'#4da6ff':'#2a2a2a')+'"></div>'
-      +'<div style="height:'+chartH+'px;display:flex;align-items:flex-start">'+dnBar+'</div>'
-      +'<div style="font-size:9px;color:'+(isSpot?'#4da6ff':'#444')+';margin-top:4px;text-align:center;font-weight:'+(isSpot?'700':'400')+'">'+lbl+'</div>'
+    var upH=p.gex>=0?barH:0;
+    var dnH=p.gex<0?barH:0;
+
+    html+='<div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:'+(barW-2)+'px;max-width:'+(barW+10)+'px">'
+      // منطقة فوق الصفر
+      +'<div style="height:'+chartH+'px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;width:100%">'
+      +(upH>0?'<div style="width:90%;height:'+upH+'px;background:'+col+';opacity:'+opacity+';border-radius:2px 2px 0 0;transition:height .3s"></div>':'')
+      +'</div>'
+      // خط الصفر + مؤشر السعر
+      +'<div style="height:2px;width:100%;background:'+(isSpot?'#4da6ff':'#222')+';position:relative">'
+      +(isSpot?'<div style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid #4da6ff"></div>':'')
+      +'</div>'
+      // منطقة تحت الصفر
+      +'<div style="height:'+chartH+'px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;width:100%">'
+      +(dnH>0?'<div style="width:90%;height:'+dnH+'px;background:'+col+';opacity:'+opacity+';border-radius:0 0 2px 2px;transition:height .3s"></div>':'')
+      +'</div>'
+      // لابل السعر
+      +'<div style="font-size:'+(isSpot?'10':'8')+'px;color:'+(isSpot?'#4da6ff':'#444')+';font-weight:'+(isSpot?'700':'400')+';white-space:nowrap;margin-top:3px;text-align:center">'+lbl+'</div>'
       +'</div>';
   });
   html+='</div>';
@@ -750,23 +833,46 @@ function renderGammaCard(){
 
   // تمرير للسعر الحالي بعد الرسم
   setTimeout(function(){
-    if(!el)return;
-    var container=el.querySelector('div');
-    if(container){
-      var centerX=closestIdx*barW-container.parentElement.clientWidth/2+barW/2;
-      container.scrollLeft=Math.max(0,centerX);
+    var inner=document.getElementById('gamma-chart-inner');
+    var parent=el;
+    if(inner&&parent){
+      var barTotalW=inner.clientWidth;
+      var visibleW=parent.clientWidth;
+      var spotX=(closestIdx/n)*barTotalW;
+      parent.scrollLeft=Math.max(0,spotX-visibleW/2);
     }
-  },50);
+  },80);
 }
 
 // ══════════════════════════════════════
 //   Option Flow
 // ══════════════════════════════════════
-let flowWS=null,flowConnected=false,flowItems=[];
-const FLOW_MIN=50000;
+let flowWS=null,flowConnected=false,flowPaused=false,flowItems=[];
+const FLOW_MIN=500000;
+
+function updateFlowBtns(){
+  var btnC=document.getElementById('flow-btn-connect');
+  var btnP=document.getElementById('flow-btn-pause');
+  var btnS=document.getElementById('flow-btn-stop');
+  if(!btnC)return;
+  if(flowConnected){
+    btnC.style.display='none';
+    btnP.style.display='';
+    btnS.style.display='';
+    btnP.textContent=flowPaused?'▶ استئناف':'⏸ إيقاف مؤقت';
+    btnP.style.background=flowPaused?'#1a6b2a':'#2a2a2a';
+    btnP.style.color=flowPaused?'#00CC44':'#aaa';
+    btnP.style.borderColor=flowPaused?'#00CC44':'#444';
+  } else {
+    btnC.style.display='';
+    btnP.style.display='none';
+    btnS.style.display='none';
+  }
+}
 
 function startFlow(){
   if(flowWS&&flowWS.readyState<=1)return;
+  flowPaused=false;
   flowWS=new WebSocket('wss://socket.massive.com/options');
   flowWS.onopen=()=>{flowWS.send(JSON.stringify({action:'auth',params:POLY_KEY}));};
   flowWS.onmessage=(e)=>{
@@ -774,19 +880,34 @@ function startFlow(){
     msgs.forEach(m=>{
       if(m.ev==='status'&&m.status==='auth_success'){
         flowConnected=true;
-        document.getElementById('flow-badge').className='ws-badge ws-live';
-        document.getElementById('flow-badge').textContent='⬤ LIVE';
+        var b=document.getElementById('flow-badge');
+        if(b){b.className='ws-badge ws-live';b.textContent='⬤ LIVE';}
         flowWS.send(JSON.stringify({action:'subscribe',params:'T.*'}));
+        updateFlowBtns();
       }
-      if(m.ev==='T') handleFlowTrade(m);
+      if(m.ev==='T'&&!flowPaused) handleFlowTrade(m);
     });
   };
   flowWS.onclose=()=>{
     flowConnected=false;
-    const b=document.getElementById('flow-badge');
+    var b=document.getElementById('flow-badge');
     if(b){b.className='ws-badge ws-off';b.textContent='⬤ OFF';}
+    updateFlowBtns();
   };
   flowWS.onerror=()=>flowWS.close();
+}
+
+function pauseFlow(){
+  flowPaused=!flowPaused;
+  updateFlowBtns();
+}
+
+function stopFlow(){
+  if(flowWS){flowWS.close();flowWS=null;}
+  flowConnected=false;flowPaused=false;
+  var b=document.getElementById('flow-badge');
+  if(b){b.className='ws-badge ws-off';b.textContent='⬤ OFF';}
+  updateFlowBtns();
 }
 
 function handleFlowTrade(t){
@@ -794,14 +915,17 @@ function handleFlowTrade(t){
   const price=parseFloat(t.p)||0;
   const size=parseInt(t.s)||0;
   const premium=price*size*100;
-  if(premium<50000)return;
+  // الحد الأدنى من الفلتر أو 500K افتراضياً
+  const minSel=parseInt(document.getElementById('flow-min-filter')?.value||'500000');
+  if(premium<Math.min(minSel,FLOW_MIN))return;
   const m=sym.match(/O:([A-Z]+)(\d{6})([CP])(\d+)/);
   if(!m)return;
   const ticker=m[1],expRaw=m[2],type=m[3]==='C'?'call':'put';
   const strike=parseInt(m[4])/1000;
-  const exp=expRaw.slice(2,4)+'/'+expRaw.slice(4,6);
-  flowItems.unshift({ticker,type,strike,exp,price,size,premium,time:new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit',second:'2-digit'})});
-  if(flowItems.length>300)flowItems.pop();
+  const exp='20'+expRaw.slice(0,2)+'/'+expRaw.slice(2,4)+'/'+expRaw.slice(4,6);
+  const expShort=expRaw.slice(2,4)+'/'+expRaw.slice(4,6);
+  flowItems.unshift({ticker,type,strike,exp:expShort,price,size,premium,time:new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit',second:'2-digit'})});
+  if(flowItems.length>500)flowItems.pop();
   if(currentView==='flow')renderFlow();
   // تحديث فلتر الأسهم
   const sel=document.getElementById('flow-ticker-filter');
@@ -816,30 +940,48 @@ function clearFlow(){flowItems=[];renderFlow();}
 function renderFlow(){
   const tickerF=document.getElementById('flow-ticker-filter')?.value||'';
   const typeF=document.getElementById('flow-type-filter')?.value||'';
-  const list=flowItems.filter(i=>{
+  const minF=parseInt(document.getElementById('flow-min-filter')?.value||'500000');
+  const list=flowItems.filter(function(i){
+    if(i.premium<minF)return false;
     if(tickerF&&i.ticker!==tickerF)return false;
     if(typeF&&i.type!==typeF)return false;
     return true;
-  }).slice(0,100);
+  }).slice(0,150);
   const el=document.getElementById('flow-list');
   if(!list.length){
-    var connectBtn='<div><div style="margin-bottom:12px">اضغط لبدء Option Flow</div><button onclick="startFlow()" style="padding:8px 20px;background:#FFA500;border:none;border-radius:6px;color:#000;font-weight:700;cursor:pointer;font-size:12px">&#9899; Connect</button></div>';
-    el.innerHTML='<div class="flow-empty">'+(flowConnected?'&#9203; في انتظار صفقات كبيرة (+$50K)...':connectBtn)+'</div>';
+    var msg=flowConnected
+      ?(flowPaused?'⏸ الفلو متوقف مؤقتاً — اضغط استئناف':'⏳ في انتظار صفقات +$'+Math.round(minF/1000)+'K...')
+      :'اضغط <strong>Connect</strong> لبدء استقبال الصفقات الكبيرة';
+    el.innerHTML='<div class="flow-empty">'+msg+'</div>';
     return;
   }
   el.innerHTML=list.map(function(i){
-    var prem=i.premium>=1000000?'$'+(i.premium/1000000).toFixed(1)+'M':'$'+(i.premium/1000).toFixed(0)+'K';
-    var isGiant=i.premium>=500000;
-    return '<div class="flow-item flow-'+i.type+'" style="'+(isGiant?'border-width:3px;background:#161616':'')+'">'
-      +'<div style="display:flex;align-items:center;gap:10px">'
-      +'<span class="flow-type">'+i.type.toUpperCase()+'</span>'
-      +'<div><div style="display:flex;align-items:baseline;gap:6px">'
-      +'<span style="font-size:13px;font-weight:700;color:#fff">'+i.ticker+'</span>'
-      +'<span class="flow-strike">'+i.strike+'</span>'
-      +'<span style="font-size:10px;color:#555">'+i.exp+'</span>'
-      +'</div><div style="font-size:10px;color:#555">'+i.time+' &middot; '+i.size.toLocaleString()+' عقد &middot; $'+i.price.toFixed(2)+'</div>'
+    var prem=i.premium>=1000000?'$'+(i.premium/1000000).toFixed(2)+'M':'$'+(Math.round(i.premium/1000))+'K';
+    var isGiant=i.premium>=1000000;
+    var isBig=i.premium>=500000;
+    var bgCol=isGiant?'#1a1000':isBig?'#0f0f0f':'#0a0a0a';
+    var borderCol=i.type==='call'?'#00CC44':'#FF3333';
+    var typeIcon=i.type==='call'?'🟢':'🔴';
+    return '<div class="flow-item flow-'+i.type+'" style="background:'+bgCol+';border-left:3px solid '+borderCol+';padding:10px 14px;margin:2px 0;border-radius:4px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
+      // يسار: نوع + معلومات
+      +'<div style="display:flex;align-items:center;gap:12px;min-width:0">'
+      +'<div style="text-align:center;flex-shrink:0">'
+      +'<div style="font-size:18px">'+typeIcon+'</div>'
+      +'<div style="font-size:10px;font-weight:700;color:'+(i.type==='call'?'#00CC44':'#FF3333')+'">'+i.type.toUpperCase()+'</div>'
+      +'</div>'
+      +'<div style="min-width:0">'
+      +'<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">'
+      +'<span style="font-size:16px;font-weight:800;color:#fff;letter-spacing:0.5px">'+i.ticker+'</span>'
+      +'<span style="font-size:14px;font-weight:600;color:#ccc">'+i.strike+'</span>'
+      +'<span style="font-size:11px;color:#666;background:#161616;padding:1px 6px;border-radius:3px">'+i.exp+'</span>'
+      +'</div>'
+      +'<div style="font-size:11px;color:#555;margin-top:3px">'+i.time+' &nbsp;·&nbsp; '+i.size.toLocaleString()+' عقد &nbsp;·&nbsp; $'+i.price.toFixed(2)+'/عقد</div>'
       +'</div></div>'
-      +'<div style="text-align:left"><div class="flow-premium" style="'+(isGiant?'font-size:14px':'')+'">'+prem+(isGiant?' &#128293;':'')+'</div></div>'
+      // يمين: قيمة + مميز
+      +'<div style="text-align:left;flex-shrink:0">'
+      +'<div style="font-size:'+(isGiant?'20':isBig?'17':'14')+'px;font-weight:800;color:'+(isGiant?'#FFA500':'#fff')+'">'+prem+'</div>'
+      +(isGiant?'<div style="font-size:10px;color:#FFA500;text-align:center">🔥 عملاق</div>':'')
+      +'</div>'
       +'</div>';
   }).join('');
 }
@@ -851,13 +993,39 @@ let snapshotInterval=null;
 
 async function fetchLivePrice(ticker){
   try{
-    let sym=ticker==='SPX'?'SPY':(POLY_MAP[ticker]||ticker);
-    const mult=ticker==='SPX'?10:1;
+    let sym=POLY_MAP[ticker]||ticker;
+    let mult=1;
+    let t=null;
+
+    // SPX — نجرب I:SPX مباشرة أولاً (indices endpoint)
+    if(ticker==='SPX'){
+      try{
+        const idxUrl='https://api.massive.com/v2/snapshot/locale/us/markets/indices/tickers/I:SPX?apiKey='+POLY_KEY;
+        const idxRes=await fetch(idxUrl);
+        const idxData=await idxRes.json();
+        const idxVal=idxData?.results?.value||idxData?.ticker?.value||idxData?.value||0;
+        if(idxVal>1000){
+          // نجح — استخدم قيمة الإندكس مباشرة
+          const livePrice=+(parseFloat(idxVal)).toFixed(2);
+          const priceEl=document.getElementById('chart-price');
+          const prev=parseFloat((priceEl.textContent||'0').replace(/,/g,''))||0;
+          priceEl.textContent=livePrice.toLocaleString();
+          if(livePrice>prev){priceEl.className='price-main flash-up';setTimeout(()=>priceEl.className='price-main',300);}
+          else if(livePrice<prev){priceEl.className='price-main flash-dn';setTimeout(()=>priceEl.className='price-main',300);}
+          const d=allData.find(x=>x.ticker==='SPX');
+          if(d){d.spot=livePrice;updateOverviewCard('SPX');}
+          return livePrice;
+        }
+      }catch(e){}
+      // fallback — SPY × 10
+      sym='SPY'; mult=10;
+    }
+
     // جلب السعر الحي من snapshot
     const url='https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers/'+encodeURIComponent(sym)+'?apiKey='+POLY_KEY;
     const res=await fetch(url);
     const data=await res.json();
-    const t=data?.ticker;
+    t=data?.ticker;
     // أولوية: lastTrade > day.c > lastQuote midpoint
     const raw=t?.lastTrade?.p||t?.day?.c||((t?.lastQuote?.P||0+t?.lastQuote?.p||0)/2)||0;
     if(!raw||raw<=0)return null;
@@ -919,6 +1087,7 @@ async function rateLimitedFetch(url){const now=Date.now();const diff=now-lastFet
 
 async function fetchCandles(ticker,tf){
   let sym=POLY_MAP[ticker]||ticker,mult=1;
+  // SPX — نستخدم SPY×10 للشموع (الـ indices API لا يدعم بيانات تاريخية كافية)
   if(ticker==='SPX'){sym='SPY';mult=10;}
   const now=new Date(),from=new Date(now);
   if(tf==='D')from.setMonth(from.getMonth()-6);
@@ -1076,7 +1245,13 @@ async function loadChart(ticker){
 }
 
 function setTF(el,tf){document.querySelectorAll('.tf').forEach(e=>e.classList.remove('active'));el.classList.add('active');currentTF=tf;chartLoaded=false;if(selectedTicker)loadChart(selectedTicker);}
-function selectTicker(ticker){selectedTicker=ticker;chartLoaded=false;buildToolbar();if(currentView==='overview'){showView('chart');}else if(currentView==='chart')loadChart(ticker);else renderOverview();}
+function selectTicker(ticker){
+  selectedTicker=ticker;
+  chartLoaded=false;
+  buildToolbar();
+  // دائماً روّح للشارت عند اختيار رمز
+  showView('chart');
+}
 
 let activeFilters=new Set(),scrSort={key:'distCall',asc:true};
 function toggleFilter(btn){const f=btn.dataset.f;if(activeFilters.has(f)){activeFilters.delete(f);btn.classList.remove('on');}else{activeFilters.add(f);btn.classList.add('on');}renderScr();}
