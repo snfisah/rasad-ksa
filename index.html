@@ -46,7 +46,12 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg0);color:var(--
 /* ─── TICKER TOOLBAR ─── */
 .ticker-toolbar{display:flex;align-items:center;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;overflow:hidden}
 .ticker-scroll{display:flex;gap:3px;padding:6px 10px;overflow-x:auto;flex:1;scroll-behavior:smooth}
-.ticker-scroll::-webkit-scrollbar{height:2px}.ticker-scroll::-webkit-scrollbar-thumb{background:var(--border2)}
+.ticker-scroll::-webkit-scrollbar{height:3px}.ticker-scroll::-webkit-scrollbar-track{background:var(--bg1)}.ticker-scroll::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+/* global horizontal scrollbar dark */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:var(--bg0)}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
+::-webkit-scrollbar-corner{background:var(--bg0)}
 .t-chip{padding:4px 13px;border-radius:6px;font-size:11px;font-weight:500;color:var(--text3);border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0}
 .t-chip:hover{color:var(--text2);background:var(--bg2);border-color:var(--border)}
 .t-chip.active{background:var(--bg3);color:var(--text1);border-color:var(--gold);font-weight:600}
@@ -271,7 +276,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg0);color:var(--
 </div>
 
 <div class="nav-tabs">
-  <div class="nav-tab active" onclick="showView('overview')">الكل</div>
+  <div class="nav-tab active" onclick="showView('overview')">الرئيسية</div>
   <div class="nav-tab" onclick="showView('chart')">الشارت</div>
   <div class="nav-tab" onclick="showView('indicators')">المؤشرات</div>
   <div class="nav-tab" onclick="showView('flow')">Option Flow</div>
@@ -1090,10 +1095,9 @@ function renderGammaCard(){
   var html='<div style="position:relative">'
     +'<div id="'+tooltipId+'" style="position:fixed;display:none;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:6px 12px;font-size:13px;font-weight:700;color:var(--text1);pointer-events:none;z-index:9999;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.8)"></div>';
 
-  // padding أيسر = نصف العرض الكلي لتوسيط السعر
-  var leftPad=Math.max(0,Math.floor(containerW/2)-closestIdx*(barW+2)-barW/2);
 
-  html+='<div id="gamma-chart-inner" style="display:flex;align-items:stretch;gap:2px;padding:0 0 0 '+leftPad+'px">';
+  // لا padding — نستخدم scrollLeft بعد الرسم
+  html+='<div id="gamma-chart-inner" style="display:flex;align-items:stretch;gap:2px;padding:0 '+(Math.floor(containerW/2))+'px">';
   levels.forEach(function(p,i){
     var pct=Math.min(1,Math.abs(p.gex)/maxAbs);
     var barH=Math.max(4,Math.round(pct*chartH));
@@ -1133,8 +1137,15 @@ function renderGammaCard(){
   html+='</div></div>';
   el.innerHTML=html;
 
-  // ── تمرير فوري للسعر في المنتصف ──
-  el.scrollLeft=0; // reset first (leftPad handles centering via padding)
+  // ── تمرير للوسط بعد الرسم مباشرة ──
+  requestAnimationFrame(function(){
+    var spotX=containerW/2 + closestIdx*(barW+2) + barW/2;
+    el.scrollLeft=spotX-containerW/2;
+    // مرة ثانية للتأكد
+    setTimeout(function(){
+      el.scrollLeft=spotX-containerW/2;
+    },100);
+  });
 }
 
 
@@ -1646,9 +1657,7 @@ async function fetchLivePrice(ticker){
 
 function startSnapshotPolling(ticker){
   stopSnapshotPolling();
-  // أول جلب فوري دائماً
   fetchLivePrice(ticker);
-  // ثم كل 10 ثوان أثناء السوق، كل 60 ثانية خارجه
   const interval=isMarketOpen()?10000:60000;
   snapshotInterval=setInterval(()=>{
     if(selectedTicker===ticker) fetchLivePrice(ticker);
@@ -1659,6 +1668,56 @@ function startSnapshotPolling(ticker){
 function stopSnapshotPolling(){
   if(snapshotInterval){clearInterval(snapshotInterval);snapshotInterval=null;}
 }
+
+// ── تحديث مباشر لكل الـ views من allData ──
+function updateOverviewCard(ticker){
+  var d=allData.find(function(x){return x.ticker===ticker;});
+  if(!d)return;
+  // تحديث بطاقات الرئيسية (pulse cards)
+  if(currentView==='overview') renderOverview();
+  // تحديث مؤشر السعر في المؤشرات
+  if(currentView==='indicators'){
+    var master=document.getElementById('sel-ind-master');
+    if(master&&master.value===ticker){
+      var badge=document.getElementById('ind-spot-badge');
+      if(badge) badge.textContent=d.spot.toLocaleString();
+    }
+  }
+}
+
+// ── polling خلفي لكل الأسهم المهمة ──
+var bgPollInterval=null;
+var bgTickerQueue=['SPX','SPY','QQQ','IWM'];
+var bgQueueIdx=0;
+
+async function bgFetchOne(){
+  if(!allData.length)return;
+  var ticker=bgTickerQueue[bgQueueIdx%bgTickerQueue.length];
+  bgQueueIdx++;
+  var sym=(ticker==='SPX'?'SPY':(POLY_MAP[ticker]||ticker));
+  var mult=ticker==='SPX'?10:1;
+  try{
+    var url='https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers/'+encodeURIComponent(sym)+'?apiKey='+POLY_KEY;
+    var res=await fetch(url);
+    var data=await res.json();
+    var t=data?.ticker;
+    var raw=t?.lastTrade?.p||t?.day?.c||0;
+    if(!raw||raw<=0)return;
+    var price=+(raw*mult).toFixed(2);
+    var d=allData.find(function(x){return x.ticker===ticker;});
+    if(d&&price>0){
+      d.spot=price;
+      updateOverviewCard(ticker);
+    }
+  }catch(e){}
+}
+
+function startBgPolling(){
+  if(bgPollInterval)clearInterval(bgPollInterval);
+  bgPollInterval=setInterval(bgFetchOne, isMarketOpen()?4000:30000);
+}
+
+
 let lastFetchTime=0;
 async function rateLimitedFetch(url){const now=Date.now();const diff=now-lastFetchTime;if(diff<500)await new Promise(r=>setTimeout(r,500-diff));lastFetchTime=Date.now();return fetch(url);}
 
@@ -1860,6 +1919,7 @@ document.addEventListener('DOMContentLoaded', function(){
   fetchSheets();
   setInterval(fetchSheets, 5*60*1000);
   if(isMarketOpen()) wsConnect();
+  startBgPolling();
   setInterval(function(){
     if(isMarketOpen()&&!wsConnected) wsConnect();
     if(!isMarketOpen()&&ws&&ws.readyState===1) ws.close();
