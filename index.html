@@ -309,44 +309,64 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg0);color:var(--
   </div>
 </div>
 
-<div id="view-indicators" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+<div id="view-indicators" style="display:none;flex:1;flex-direction:column;overflow:hidden;background:var(--bg0)">
   <!-- شريط البحث الموحد -->
-  <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:#0d0d0d;border-bottom:0.5px solid #1e1e1e;flex-shrink:0">
-    <span style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px">الرمز</span>
-    <select class="ind-select" id="sel-ind-master" onchange="onMasterSelect(this.value)" style="font-size:12px;padding:4px 10px"></select>
-    <span id="ind-spot-badge" style="font-size:13px;color:#4da6ff;font-weight:700"></span>
+  <div style="display:flex;align-items:center;gap:10px;padding:9px 16px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0">
+    <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;font-weight:700">الرمز</span>
+    <select class="ind-select" id="sel-ind-master" onchange="onMasterSelect(this.value)" style="font-size:12px;padding:5px 12px;background:var(--bg2);border-color:var(--border2);color:var(--text1)"></select>
+    <span id="ind-spot-badge" style="font-size:16px;color:var(--blue);font-weight:800;letter-spacing:-0.5px"></span>
+    <span id="ind-zg-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:5px;margin-right:4px"></span>
   </div>
-  <!-- Gamma Profile — عرض كامل -->
-  <div style="flex-shrink:0;padding:12px 14px 0;background:#0a0a0a">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <span style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1px;font-weight:600">Gamma Profile</span>
-      <div style="display:flex;gap:14px;font-size:9px;color:#444">
-        <span><span style="color:#00CC44">▲</span> Call GEX</span>
-        <span><span style="color:#FF4444">▼</span> Put GEX</span>
-        <span><span style="color:#4da6ff">|</span> السعر الحالي</span>
+
+  <!-- قسم قابل للتمرير -->
+  <div style="flex:1;overflow-y:auto" id="ind-scroll-area">
+
+    <!-- ═══ GAMMA PROFILE ═══ -->
+    <div style="padding:14px 16px 0;background:var(--bg0);border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;font-weight:700">Gamma Profile</span>
+        <div style="display:flex;gap:16px;font-size:10px;color:var(--text3)">
+          <span><span style="color:var(--green)">▲</span> Call GEX</span>
+          <span><span style="color:var(--red)">▼</span> Put GEX</span>
+          <span><span style="color:var(--blue)">◆</span> السعر</span>
+        </div>
       </div>
+      <div id="ind-gamma-content" style="width:100%;overflow-x:auto;padding-bottom:10px"></div>
     </div>
-    <div id="ind-gamma-content" style="width:100%;overflow-x:auto;padding-bottom:6px"></div>
-  </div>
-  <!-- الكاردز الأربعة في صف واحد -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 14px;overflow-y:auto;flex:1">
-    <div class="ind-card" style="gap:6px">
-      <div class="ind-card-title">0DTE Pressure</div>
-      <div id="ind-pressure-content"></div>
+
+    <!-- ═══ صف 1: 4 مؤشرات ═══ -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 16px">
+      <div class="ind-card"><div class="ind-card-title">0DTE Pressure</div><div id="ind-pressure-content"></div></div>
+      <div class="ind-card"><div class="ind-card-title">Delta Net</div><div id="ind-delta-content"></div></div>
+      <div class="ind-card"><div class="ind-card-title">Put / Call Ratio</div><div id="ind-pc-content"></div></div>
+      <div class="ind-card"><div class="ind-card-title">إحصائيات</div><div id="ind-stats-content"></div></div>
     </div>
-    <div class="ind-card" style="gap:6px">
-      <div class="ind-card-title">Delta Net</div>
-      <div id="ind-delta-content"></div>
+
+    <!-- ═══ صف 2: GEX Flip + Max Pain ═══ -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 10px">
+      <div class="ind-card"><div class="ind-card-title">⚡ GEX Flip Zone — نقطة انعكاس الغاما</div><div id="ind-flip-content"></div></div>
+      <div class="ind-card"><div class="ind-card-title">🎯 Max Pain Level</div><div id="ind-maxpain-content"></div></div>
     </div>
-    <div class="ind-card" style="gap:6px">
-      <div class="ind-card-title">Put / Call Ratio</div>
-      <div id="ind-pc-content"></div>
+
+    <!-- ═══ صف 3: Charm + Vanna ═══ -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 10px">
+      <div class="ind-card"><div class="ind-card-title">⏱ Charm Exposure — تسوس الدلتا</div><div id="ind-charm-content"></div></div>
+      <div class="ind-card"><div class="ind-card-title">🌊 Vanna Exposure</div><div id="ind-vanna-content"></div></div>
     </div>
-    <div class="ind-card" style="gap:6px">
-      <div class="ind-card-title">إحصائيات</div>
-      <div id="ind-stats-content"></div>
+
+    <!-- ═══ صف 4: Skew + Implied Move ═══ -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 10px">
+      <div class="ind-card"><div class="ind-card-title">📐 Options Skew Monitor</div><div id="ind-skew-content"></div></div>
+      <div class="ind-card"><div class="ind-card-title">📏 Implied Move Bracket</div><div id="ind-move-content"></div></div>
     </div>
-  </div>
+
+    <!-- ═══ صف 5: PW/CW Heatmap + GEX Velocity ═══ -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 16px">
+      <div class="ind-card"><div class="ind-card-title">🔥 Wall Distance Heatmap</div><div id="ind-heat-content"></div></div>
+      <div class="ind-card"><div class="ind-card-title">⚡ GEX Velocity</div><div id="ind-velocity-content"></div></div>
+    </div>
+
+  </div><!-- end scroll area -->
 </div>
 
 <!-- Option Flow Panel -->
@@ -559,11 +579,12 @@ function handleLiveTick(msg){
   const barTime=Math.floor(msg.s/1000/60/tfMins)*tfMins*60;
 
   if(!liveCandle||liveCandle.time!==barTime){
+    // شمعة جديدة — نبدأ بالسعر الحالي فقط (لا نستخدم day open/high/low)
     liveCandle={
       time:barTime,
-      open:+(parseFloat(msg.o||rawClose)*mult).toFixed(2)||price,
-      high:+(parseFloat(msg.h||rawClose)*mult).toFixed(2)||price,
-      low: +(parseFloat(msg.l||rawClose)*mult).toFixed(2)||price,
+      open:price,
+      high:price,
+      low:price,
       close:price
     };
   } else {
@@ -933,26 +954,37 @@ function renderStatsCard(){
     +'</div>';
 }
 function onMasterSelect(ticker){
-  // تحديث كل الـ selects للتوافقية
-  ['sel-gamma','sel-pressure','sel-delta','sel-pc'].forEach(function(id){
-    var sel=document.getElementById(id);
-    if(sel)sel.value=ticker;
-  });
   renderAllIndicators();
 }
 
 function renderAllIndicators(){
   var master=document.getElementById('sel-ind-master');
-  var ticker=master?master.value:(allData[0]?.ticker||'');
+  var ticker=master?master.value:(allData[0]?allData[0].ticker:'');
   var d=allData.find(function(x){return x.ticker===ticker;});
-  // تحديث السعر
+  // تحديث السعر + ZG badge
   var badge=document.getElementById('ind-spot-badge');
   if(badge&&d) badge.textContent=d.spot.toLocaleString();
+  var zgBadge=document.getElementById('ind-zg-badge');
+  if(zgBadge&&d){
+    var bull=d.spot>=d.zeroGamma;
+    zgBadge.textContent=bull?'▲ فوق ZG':'▼ تحت ZG';
+    zgBadge.style.background=bull?'var(--green-dim)':'var(--red-dim)';
+    zgBadge.style.color=bull?'var(--green)':'var(--red)';
+    zgBadge.style.border='1px solid '+(bull?'var(--green-mid)':'var(--red-mid)');
+  }
   renderGammaCard();
   renderPressureCard();
   renderDeltaCard();
   renderPCCard();
   renderStatsCard();
+  renderFlipZone();
+  renderMaxPain();
+  renderCharm();
+  renderVanna();
+  renderSkew();
+  renderImpliedMove();
+  renderWallHeatmap();
+  renderGEXVelocity();
 }
 
 // ══════════════════════════════════════
@@ -1091,20 +1123,314 @@ function renderGammaCard(){
   html+='</div></div>';
   el.innerHTML=html;
 
-  // تمرير للسعر
+  // تمرير للسعر — يضمن أن السعر في الوسط من البداية
   setTimeout(function(){
     var inner=document.getElementById('gamma-chart-inner');
     var parent=el;
-    if(inner&&parent){
-      var spotX=(closestIdx/(n||1))*inner.scrollWidth;
-      parent.scrollLeft=Math.max(0,spotX-parent.clientWidth/2);
-    }
-  },80);
+    if(!inner||!parent)return;
+    // انتظر حتى يُحسب العرض
+    var spotX=(closestIdx+0.5)*(barW+2);
+    var centerOffset=spotX-parent.clientWidth/2;
+    parent.scrollLeft=Math.max(0,centerOffset);
+  },50);
+  // مرة ثانية بعد 200ms للتأكد
+  setTimeout(function(){
+    var inner=document.getElementById('gamma-chart-inner');
+    var parent=el;
+    if(!inner||!parent)return;
+    var spotX=(closestIdx+0.5)*(barW+2);
+    parent.scrollLeft=Math.max(0,spotX-parent.clientWidth/2);
+  },200);
+}
+
+
+// ══════════════════════════════════════
+//   GEX Flip Zone
+// ══════════════════════════════════════
+function renderFlipZone(){
+  var master=document.getElementById('sel-ind-master');
+  var t=master?master.value:'';
+  var d=allData.find(function(x){return x.ticker===t;});
+  var el=document.getElementById('ind-flip-content');
+  if(!el||!d){if(el)el.innerHTML='';return;}
+  var levels=getGammaData(d);
+  if(!levels.length){el.innerHTML='<div style="color:var(--text3);font-size:11px;padding:8px">لا توجد بيانات intraday</div>';return;}
+  // GEX Flip = أول نقطة ينقلب فيها GEX من سالب لموجب فوق السعر
+  var sorted=levels.slice().sort(function(a,b){return a.strike-b.strike;});
+  var spot=d.spot;
+  var flipUp=null,flipDn=null;
+  for(var i=1;i<sorted.length;i++){
+    if(sorted[i-1].gex<0&&sorted[i].gex>=0&&sorted[i].strike>spot&&!flipUp) flipUp=sorted[i].strike;
+    if(sorted[i-1].gex>=0&&sorted[i].gex<0&&sorted[i].strike<spot&&!flipDn) flipDn=sorted[i].strike;
+  }
+  // إجمالي Call vs Put GEX
+  var cGex=levels.filter(function(v){return v.gex>0;}).reduce(function(a,b){return a+b.gex;},0);
+  var pGex=Math.abs(levels.filter(function(v){return v.gex<0;}).reduce(function(a,b){return a+b.gex;},0));
+  var bias=cGex>pGex?'Call Bias':'Put Bias';
+  var biasCol=cGex>pGex?'var(--green)':'var(--red)';
+  el.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
+    +'<div class="stat-box" style="padding:10px;text-align:center">'
+    +'<div style="font-size:9px;color:var(--text3);margin-bottom:4px">Flip فوق السعر ↑</div>'
+    +'<div style="font-size:18px;font-weight:800;color:var(--green)">'+(flipUp||'—')+'</div>'
+    +'<div style="font-size:9px;color:var(--text3);margin-top:2px">'+(flipUp?'+'+(flipUp-spot).toFixed(1)+' pts':'')+'</div>'
+    +'</div>'
+    +'<div class="stat-box" style="padding:10px;text-align:center">'
+    +'<div style="font-size:9px;color:var(--text3);margin-bottom:4px">Flip تحت السعر ↓</div>'
+    +'<div style="font-size:18px;font-weight:800;color:var(--red)">'+(flipDn||'—')+'</div>'
+    +'<div style="font-size:9px;color:var(--text3);margin-top:2px">'+(flipDn?'-'+(spot-flipDn).toFixed(1)+' pts':'')+'</div>'
+    +'</div></div>'
+    +'<div style="background:var(--bg3);border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">'
+    +'<span style="font-size:10px;color:var(--text3)">الاتجاه السائد</span>'
+    +'<span style="font-size:12px;font-weight:700;color:'+biasCol+'">'+bias+'</span>'
+    +'</div>';
 }
 
 // ══════════════════════════════════════
-//   Option Flow
+//   Max Pain Level
 // ══════════════════════════════════════
+function renderMaxPain(){
+  var master=document.getElementById('sel-ind-master');
+  var t=master?master.value:'';
+  var d=allData.find(function(x){return x.ticker===t;});
+  var el=document.getElementById('ind-maxpain-content');
+  if(!el||!d){if(el)el.innerHTML='';return;}
+  var levels=getGammaData(d);
+  var spot=d.spot;
+  // Max Pain ≈ أكبر تركّز OI بين CW وPW
+  var glArr=[d.gl1,d.gl2,d.gl3,d.gl4,d.gl5,d.gl6,d.gl7].filter(function(x){return x>0;});
+  // حساب تقريبي: المستوى الأقرب لمتوسط CW وPW مع تعديل P/C
+  var cw=d.callWall,pw=d.putWall;
+  var pcRatio=d.pcRatio||1;
+  // Max Pain يميل للـ put wall لما P/C مرتفع
+  var maxPain=Math.round((cw*(1/(1+pcRatio))+pw*(pcRatio/(1+pcRatio)))*2)/2;
+  var dist=maxPain-spot;
+  var distPct=(dist/spot*100).toFixed(2);
+  var col=dist>0?'var(--green)':'var(--red)';
+  el.innerHTML='<div style="text-align:center;padding:12px 0">'
+    +'<div style="font-size:11px;color:var(--text3);margin-bottom:6px">Max Pain المقدّر</div>'
+    +'<div style="font-size:26px;font-weight:800;color:var(--gold)">'+maxPain.toLocaleString()+'</div>'
+    +'<div style="font-size:12px;font-weight:600;color:'+col+';margin-top:4px">'+(dist>0?'▲ +':' ')+dist.toFixed(1)+' pts ('+distPct+'%)</div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">'
+    +'<div class="stat-box" style="padding:7px;text-align:center"><div style="font-size:9px;color:var(--text3)">Call Wall</div><div style="font-size:13px;font-weight:700;color:var(--red)">'+cw+'</div></div>'
+    +'<div class="stat-box" style="padding:7px;text-align:center"><div style="font-size:9px;color:var(--text3)">Put Wall</div><div style="font-size:13px;font-weight:700;color:var(--green)">'+pw+'</div></div>'
+    +'</div>';
+}
+
+// ══════════════════════════════════════
+//   Charm Exposure
+// ══════════════════════════════════════
+function renderCharm(){
+  var master=document.getElementById('sel-ind-master');
+  var t=master?master.value:'';
+  var d=allData.find(function(x){return x.ticker===t;});
+  var el=document.getElementById('ind-charm-content');
+  if(!el||!d){if(el)el.innerHTML='';return;}
+  // Charm ≈ Theta × الحساسية للوقت على الدلتا
+  // نقدر: charm = delta × theta / (vega + 0.01)
+  var theta=Math.abs(d.theta)||1;
+  var vega=d.vega||1;
+  var dCall=d.dCall||0;
+  var dPut=Math.abs(d.dPut||0);
+  var charmCall=+(dCall*theta/vega).toFixed(2);
+  var charmPut=+(dPut*theta/vega).toFixed(2);
+  var netCharm=+(charmCall-charmPut).toFixed(2);
+  var col=netCharm>0?'var(--green)':'var(--red)';
+  el.innerHTML='<div style="font-size:10px;color:var(--text3);margin-bottom:8px">يقيس تدفقات الهيدجينج المتوقعة مع اقتراب انتهاء الصلاحية</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">'
+    +'<div class="stat-box" style="padding:8px;text-align:center"><div style="font-size:9px;color:var(--text3)">Call Charm</div><div style="font-size:14px;font-weight:700;color:var(--green)">'+charmCall+'</div></div>'
+    +'<div class="stat-box" style="padding:8px;text-align:center"><div style="font-size:9px;color:var(--text3)">Put Charm</div><div style="font-size:14px;font-weight:700;color:var(--red)">'+charmPut+'</div></div>'
+    +'<div class="stat-box" style="padding:8px;text-align:center"><div style="font-size:9px;color:var(--text3)">Net Charm</div><div style="font-size:14px;font-weight:700;color:'+col+'">'+netCharm+'</div></div>'
+    +'</div>'
+    +'<div style="margin-top:8px;background:var(--bg3);border-radius:6px;padding:8px 12px;font-size:10px;color:var(--text3)">'
+    +(netCharm>0?'📈 ضغط شراء متوقع — MM سيشتري دلتا مع قرب الانتهاء':'📉 ضغط بيع متوقع — MM سيبيع دلتا مع قرب الانتهاء')
+    +'</div>';
+}
+
+// ══════════════════════════════════════
+//   Vanna Exposure
+// ══════════════════════════════════════
+function renderVanna(){
+  var master=document.getElementById('sel-ind-master');
+  var t=master?master.value:'';
+  var d=allData.find(function(x){return x.ticker===t;});
+  var el=document.getElementById('ind-vanna-content');
+  if(!el||!d){if(el)el.innerHTML='';return;}
+  // Vanna ≈ vega × (delta / spot) — تغير Delta مع تغير IV
+  var vega=d.vega||0;
+  var spot=d.spot||1;
+  var dCall=d.dCall||0;
+  var dPut=Math.abs(d.dPut||0);
+  var vannaBull=+(vega*(dCall/spot)*100).toFixed(2);
+  var vannaBear=+(vega*(dPut/spot)*100).toFixed(2);
+  var netVanna=+(vannaBull-vannaBear).toFixed(2);
+  // تفسير
+  var pcRatio=d.pcRatio||1;
+  var ivEnv=pcRatio>1.2?'IV مرتفعة (تحوط)':pcRatio<0.8?'IV منخفضة (مضاربة)':'IV طبيعية';
+  var vannaSignal=netVanna>0?'🟢 IV هبوط → ضغط شراء':'🔴 IV صعود → ضغط بيع';
+  el.innerHTML='<div style="font-size:10px;color:var(--text3);margin-bottom:8px">تأثير تغير IV على تدفقات الهيدجينج</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'
+    +'<div class="stat-box" style="padding:8px;text-align:center"><div style="font-size:9px;color:var(--text3)">Bull Vanna</div><div style="font-size:14px;font-weight:700;color:var(--green)">'+vannaBull+'</div></div>'
+    +'<div class="stat-box" style="padding:8px;text-align:center"><div style="font-size:9px;color:var(--text3)">Bear Vanna</div><div style="font-size:14px;font-weight:700;color:var(--red)">'+vannaBear+'</div></div>'
+    +'</div>'
+    +'<div class="stat-box" style="padding:8px;margin-bottom:6px;display:flex;justify-content:space-between">'
+    +'<span style="font-size:10px;color:var(--text3)">Net Vanna</span>'
+    +'<span style="font-size:13px;font-weight:700;color:'+(netVanna>0?'var(--green)':'var(--red)')+'">'+netVanna+'</span>'
+    +'</div>'
+    +'<div style="background:var(--bg3);border-radius:6px;padding:8px 12px;font-size:10px;color:var(--text2)">'
+    +ivEnv+' &nbsp;·&nbsp; '+vannaSignal
+    +'</div>';
+}
+
+// ══════════════════════════════════════
+//   Options Skew
+// ══════════════════════════════════════
+function renderSkew(){
+  var master=document.getElementById('sel-ind-master');
+  var t=master?master.value:'';
+  var d=allData.find(function(x){return x.ticker===t;});
+  var el=document.getElementById('ind-skew-content');
+  if(!el||!d){if(el)el.innerHTML='';return;}
+  var pcRatio=d.pcRatio||1;
+  // Skew مقدّر = P/C × (OI_Put / OI_Call) factor
+  var oiCall=d.oiCall||1;
+  var oiPut=d.oiPut||1;
+  var skew=+((oiPut/oiCall)*pcRatio).toFixed(3);
+  var skewPct=+((skew-1)*100).toFixed(1);
+  var col=skew>1.1?'var(--red)':skew<0.9?'var(--green)':'var(--gold)';
+  var label=skew>1.3?'خوف مرتفع جداً':skew>1.1?'خوف — طلب على Puts':skew<0.8?'جشع — طلب على Calls':skew<0.9?'تفاؤل':'متوازن';
+  // بار السكيو
+  var barPct=Math.min(100,Math.max(0,(skew/2)*100));
+  el.innerHTML='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px">'
+    +'<span style="font-size:26px;font-weight:800;color:'+col+'">'+skew.toFixed(2)+'</span>'
+    +'<span style="font-size:12px;font-weight:700;color:'+col+'">'+label+'</span>'
+    +'</div>'
+    +'<div style="height:8px;background:var(--bg4);border-radius:4px;margin-bottom:4px;overflow:hidden">'
+    +'<div style="height:100%;width:'+barPct+'%;background:'+col+';border-radius:4px;transition:width .5s"></div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-bottom:8px"><span>جشع 0</span><span>متوازن 1</span><span>خوف 2+</span></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
+    +'<div class="stat-box" style="padding:7px;text-align:center"><div style="font-size:9px;color:var(--text3)">OI Call</div><div style="font-size:12px;font-weight:700;color:var(--green)">'+Number(oiCall).toLocaleString()+'</div></div>'
+    +'<div class="stat-box" style="padding:7px;text-align:center"><div style="font-size:9px;color:var(--text3)">OI Put</div><div style="font-size:12px;font-weight:700;color:var(--red)">'+Number(oiPut).toLocaleString()+'</div></div>'
+    +'</div>';
+}
+
+// ══════════════════════════════════════
+//   Implied Move Bracket
+// ══════════════════════════════════════
+function renderImpliedMove(){
+  var master=document.getElementById('sel-ind-master');
+  var t=master?master.value:'';
+  var d=allData.find(function(x){return x.ticker===t;});
+  var el=document.getElementById('ind-move-content');
+  if(!el||!d){if(el)el.innerHTML='';return;}
+  var spot=d.spot;
+  var vega=d.vega||0;
+  var oiTotal=(d.oiCall||0)+(d.oiPut||0);
+  // IV مقدرة من Vega / OI
+  var ivEst=oiTotal>0?Math.min(150,Math.max(5,Math.abs(vega)/oiTotal*10000)):20;
+  var dailyMove=+(spot*(ivEst/100)*Math.sqrt(1/252)).toFixed(2);
+  var weeklyMove=+(spot*(ivEst/100)*Math.sqrt(5/252)).toFixed(2);
+  var monthlyMove=+(spot*(ivEst/100)*Math.sqrt(21/252)).toFixed(2);
+  var fmt=function(v){return v.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:2});};
+  el.innerHTML='<div style="font-size:10px;color:var(--text3);margin-bottom:10px">IV مقدّرة: <strong style="color:var(--blue)">'+ivEst.toFixed(1)+'%</strong></div>'
+    +'<div style="display:flex;flex-direction:column;gap:6px">'
+    +['يومي','أسبوعي','شهري'].map(function(lbl,i){
+      var mv=[dailyMove,weeklyMove,monthlyMove][i];
+      var upT=+(spot+mv).toFixed(2);
+      var dnT=+(spot-mv).toFixed(2);
+      return '<div class="stat-box" style="padding:8px 12px;display:flex;align-items:center;gap:8px">'
+        +'<span style="font-size:10px;color:var(--text3);width:44px;flex-shrink:0">'+lbl+'</span>'
+        +'<span style="font-size:11px;font-weight:700;color:var(--red)">'+fmt(dnT)+'</span>'
+        +'<div style="flex:1;height:2px;background:var(--bg4);position:relative;border-radius:1px">'
+        +'<div style="position:absolute;left:50%;top:-4px;width:2px;height:10px;background:var(--blue);transform:translateX(-50%)"></div>'
+        +'</div>'
+        +'<span style="font-size:11px;font-weight:700;color:var(--green)">'+fmt(upT)+'</span>'
+        +'<span style="font-size:10px;color:var(--text3);width:36px;text-align:left">±'+fmt(mv)+'</span>'
+        +'</div>';
+    }).join('')
+    +'</div>';
+}
+
+// ══════════════════════════════════════
+//   Wall Distance Heatmap
+// ══════════════════════════════════════
+function renderWallHeatmap(){
+  var el=document.getElementById('ind-heat-content');
+  if(!el)return;
+  // أقرب 12 سهم من CW أو PW
+  var items=allData.map(function(d){
+    var distCW=d.callWall>0?+((d.callWall-d.spot)/d.spot*100):999;
+    var distPW=d.putWall>0?+((d.spot-d.putWall)/d.spot*100):999;
+    return{ticker:d.ticker,distCW:distCW,distPW:distPW,bull:d.spot>=d.zeroGamma};
+  }).filter(function(d){return d.distCW<20||d.distPW<20;})
+    .sort(function(a,b){return Math.min(a.distCW,a.distPW)-Math.min(b.distCW,b.distPW);})
+    .slice(0,12);
+
+  if(!items.length){el.innerHTML='<div style="color:var(--text3);font-size:11px;padding:8px">لا توجد بيانات</div>';return;}
+  el.innerHTML='<div style="display:flex;flex-direction:column;gap:4px">'
+    +items.map(function(d){
+      var nearCW=d.distCW<=d.distPW;
+      var dist=nearCW?d.distCW:d.distPW;
+      var col=nearCW?'var(--red)':'var(--green)';
+      var wallLabel=nearCW?'CW':'PW';
+      var barPct=Math.min(100,Math.max(2,100-dist*5));
+      return '<div style="display:flex;align-items:center;gap:8px">'
+        +'<span style="font-size:11px;font-weight:700;color:var(--text1);width:44px;flex-shrink:0">'+d.ticker+'</span>'
+        +'<div style="flex:1;height:7px;background:var(--bg4);border-radius:3px;overflow:hidden">'
+        +'<div style="height:100%;width:'+barPct+'%;background:'+col+';border-radius:3px;transition:width .4s"></div>'
+        +'</div>'
+        +'<span style="font-size:10px;color:'+col+';width:50px;text-align:left;flex-shrink:0">'+dist.toFixed(1)+'% ↔'+wallLabel+'</span>'
+        +'</div>';
+    }).join('')
+    +'</div>';
+}
+
+// ══════════════════════════════════════
+//   GEX Velocity
+// ══════════════════════════════════════
+function renderGEXVelocity(){
+  var master=document.getElementById('sel-ind-master');
+  var t=master?master.value:'';
+  var d=allData.find(function(x){return x.ticker===t;});
+  var el=document.getElementById('ind-velocity-content');
+  if(!el||!d){if(el)el.innerHTML='';return;}
+  var levels=getGammaData(d);
+  if(!levels.length){el.innerHTML='<div style="color:var(--text3);font-size:11px;padding:8px">لا توجد بيانات intraday</div>';return;}
+  // حساب تمركز الـ GEX حول السعر (200 نقطة)
+  var spot=d.spot;
+  var window200=levels.filter(function(l){return Math.abs(l.strike-spot)<=200;});
+  var nearCall=window200.filter(function(l){return l.gex>0;}).reduce(function(a,b){return a+b.gex;},0);
+  var nearPut=Math.abs(window200.filter(function(l){return l.gex<0;}).reduce(function(a,b){return a+b.gex;},0));
+  var totalNear=nearCall+nearPut||1;
+  var callPct=Math.round(nearCall/totalNear*100);
+  var gexConc=+(totalNear/1000000).toFixed(1);
+  // velocity = تركز الـ GEX (كلما ارتفع كلما كان السوق مثبّتاً)
+  var stability=gexConc>50?'مثبّت جداً':gexConc>20?'مثبّت':'متحرك';
+  var stabCol=gexConc>50?'var(--green)':gexConc>20?'var(--gold)':'var(--red)';
+  el.innerHTML='<div style="font-size:10px;color:var(--text3);margin-bottom:8px">تركّز GEX حول السعر (±200 نقطة)</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'
+    +'<div class="stat-box" style="padding:9px;text-align:center">'
+    +'<div style="font-size:9px;color:var(--text3)">Call GEX قريب</div>'
+    +'<div style="font-size:15px;font-weight:800;color:var(--green)">'+callPct+'%</div>'
+    +'</div>'
+    +'<div class="stat-box" style="padding:9px;text-align:center">'
+    +'<div style="font-size:9px;color:var(--text3)">إجمالي GEX</div>'
+    +'<div style="font-size:15px;font-weight:800;color:var(--blue)">'+gexConc+'M</div>'
+    +'</div>'
+    +'</div>'
+    +'<div class="stat-box" style="padding:9px;display:flex;justify-content:space-between;align-items:center">'
+    +'<span style="font-size:10px;color:var(--text3)">استقرار السوق</span>'
+    +'<span style="font-size:13px;font-weight:700;color:'+stabCol+'">'+stability+'</span>'
+    +'</div>'
+    +'<div style="margin-top:6px;font-size:10px;color:var(--text3);background:var(--bg3);padding:7px 10px;border-radius:6px">'
+    +(gexConc>50?'🔒 MM مثبّتون للسعر — تحركات مفاجئة غير متوقعة'
+     :gexConc>20?'⚠️ GEX معتدل — تحركات ممكنة عند كسر المستويات'
+     :'🚀 GEX منخفض — السوق في وضع متقلب')
+    +'</div>';
+}
+
+
 let flowWS=null,flowConnected=false,flowPaused=false,flowItems=[];
 const FLOW_MIN=500000;
 
@@ -1304,11 +1630,8 @@ async function fetchLivePrice(ticker){
       const tfMins=currentTF==='D'?1440:currentTF==='60'?60:parseInt(currentTF)||5;
       const barTime=Math.floor(nowSec/60/tfMins)*tfMins*60;
       if(!liveCandle||liveCandle.time!==barTime){
-        // إنشاء شمعة جديدة من day open إذا متاح
-        const dayOpen=+(( t?.day?.o||raw)*mult).toFixed(2);
-        const dayH=+((t?.day?.h||raw)*mult).toFixed(2);
-        const dayL=+((t?.day?.l||raw)*mult).toFixed(2);
-        liveCandle={time:barTime,open:dayOpen,high:Math.max(dayH,livePrice),low:Math.min(dayL,livePrice),close:livePrice};
+        // شمعة جديدة — نبدأ بالسعر الحالي فقط
+        liveCandle={time:barTime,open:livePrice,high:livePrice,low:livePrice,close:livePrice};
       } else {
         liveCandle.high=Math.max(liveCandle.high,livePrice);
         liveCandle.low=Math.min(liveCandle.low,livePrice);
