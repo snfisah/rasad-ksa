@@ -204,23 +204,38 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#ff
   </div>
 </div>
 
-<div id="view-indicators" class="ind-panel" style="display:none">
-  <div class="ind-grid" id="ind-grid">
-    <div class="ind-card">
-      <div class="ind-card-header"><span class="ind-card-title">Gamma Profile</span><select class="ind-select" id="sel-gamma" onchange="renderGammaCard()"></select></div>
-      <div id="ind-gamma-content"><div class="loading"><div class="spinner"></div></div></div>
+<div id="view-indicators" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+  <!-- شريط البحث الموحد -->
+  <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:#0d0d0d;border-bottom:0.5px solid #1e1e1e;flex-shrink:0">
+    <span style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px">الرمز</span>
+    <select class="ind-select" id="sel-ind-master" onchange="onMasterSelect(this.value)" style="font-size:12px;padding:4px 10px"></select>
+    <span id="ind-spot-badge" style="font-size:12px;color:#4da6ff;font-weight:600"></span>
+  </div>
+  <!-- Gamma Profile — عرض كامل -->
+  <div style="flex-shrink:0;padding:12px 14px 0;background:#0a0a0a">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;font-weight:600">Gamma Profile</span>
+      <span style="font-size:9px;color:#333">أخضر↑ Call GEX &nbsp; أحمر↓ Put GEX &nbsp; <span style="color:#4da6ff">أزرق = السعر</span></span>
     </div>
-    <div class="ind-card">
-      <div class="ind-card-header"><span class="ind-card-title">0DTE Pressure</span><select class="ind-select" id="sel-pressure" onchange="renderPressureCard()"></select></div>
-      <div id="ind-pressure-content"><div class="loading"><div class="spinner"></div></div></div>
+    <div id="ind-gamma-content" style="overflow-x:auto;padding-bottom:4px"></div>
+  </div>
+  <!-- الكاردز الأربعة في صف واحد -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 14px;overflow-y:auto;flex:1">
+    <div class="ind-card" style="gap:6px">
+      <div class="ind-card-title">0DTE Pressure</div>
+      <div id="ind-pressure-content"></div>
     </div>
-    <div class="ind-card">
-      <div class="ind-card-header"><span class="ind-card-title">Delta Net Exposure</span><select class="ind-select" id="sel-delta" onchange="renderDeltaCard()"></select></div>
-      <div id="ind-delta-content"><div class="loading"><div class="spinner"></div></div></div>
+    <div class="ind-card" style="gap:6px">
+      <div class="ind-card-title">Delta Net</div>
+      <div id="ind-delta-content"></div>
     </div>
-    <div class="ind-card">
-      <div class="ind-card-header"><span class="ind-card-title">Put / Call Ratio</span><select class="ind-select" id="sel-pc" onchange="renderPCCard()"></select></div>
-      <div id="ind-pc-content"><div class="loading"><div class="spinner"></div></div></div>
+    <div class="ind-card" style="gap:6px">
+      <div class="ind-card-title">Put / Call Ratio</div>
+      <div id="ind-pc-content"></div>
+    </div>
+    <div class="ind-card" style="gap:6px">
+      <div class="ind-card-title">إحصائيات</div>
+      <div id="ind-stats-content"></div>
     </div>
   </div>
 </div>
@@ -449,7 +464,28 @@ async function fetchSheets(){try{const res=await fetch(CSV_URL);const text=await
 
 function buildToolbar(){const s=document.getElementById('ticker-scroll');s.innerHTML='';allData.forEach(d=>{const c=document.createElement('div');c.className='t-chip'+(selectedTicker===d.ticker?' active':'');c.textContent=d.ticker;c.onclick=()=>selectTicker(d.ticker);s.appendChild(c);});}
 function scrollTickers(dx){document.getElementById('ticker-scroll').scrollBy({left:dx,behavior:'smooth'});}
-function buildIndicatorSelects(){['sel-gamma','sel-pressure','sel-delta','sel-pc'].forEach(id=>{const sel=document.getElementById(id);if(!sel)return;const cur=sel.value;sel.innerHTML='';allData.forEach(d=>{const o=document.createElement('option');o.value=d.ticker;o.textContent=d.ticker;sel.appendChild(o);});if(cur&&allData.find(x=>x.ticker===cur))sel.value=cur;else sel.value=allData[0]?.ticker||'';});}
+function buildIndicatorSelects(){
+  // ملء المسترسيلكت الموحد
+  const master=document.getElementById('sel-ind-master');
+  if(!master)return;
+  const cur=master.value;
+  master.innerHTML='';
+  allData.forEach(function(d){
+    var o=document.createElement('option');
+    o.value=d.ticker;o.textContent=d.ticker;
+    master.appendChild(o);
+  });
+  if(cur&&allData.find(function(x){return x.ticker===cur;})) master.value=cur;
+  else master.value=allData[0]?.ticker||'';
+  // الحفاظ على التوافقية مع الكود القديم
+  ['sel-gamma','sel-pressure','sel-delta','sel-pc'].forEach(function(id){
+    var sel=document.getElementById(id);
+    if(!sel)return;
+    sel.innerHTML='';
+    allData.forEach(function(d){var o=document.createElement('option');o.value=d.ticker;o.textContent=d.ticker;sel.appendChild(o);});
+    sel.value=master.value;
+  });
+}
 
 function renderOverview(){const panel=document.getElementById('view-overview');if(!allData.length)return;panel.innerHTML='<div style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">'+allData.length+' رمز</div><div class="ov-grid" id="ov-grid"></div>';const grid=document.getElementById('ov-grid');allData.forEach(d=>{const range=d.callWall-d.putWall;const pct=range>0?Math.max(2,Math.min(97,((d.spot-d.putWall)/range)*100)):50;const bull=d.spot>=d.zeroGamma;const card=document.createElement('div');card.className='ov-card '+(selectedTicker===d.ticker?'sel':'');card.onclick=()=>selectTicker(d.ticker);card.innerHTML='<div class="ov-top"><span class="ov-ticker">'+d.ticker+'</span><span class="ov-price">'+d.spot.toLocaleString()+'</span></div><div class="ov-lrow"><span class="ov-ll">Call Wall</span><span class="ov-lv vc-cw">'+d.callWall+'</span></div><div class="ov-bar"><div class="ov-spot" style="left:'+pct.toFixed(1)+'%"></div></div><div class="ov-lrow"><span class="ov-ll">Zero Gamma</span><span class="ov-lv vc-zg">'+d.zeroGamma+'</span></div><div class="ov-lrow"><span class="ov-ll">Put Wall</span><span class="ov-lv vc-pw">'+d.putWall+'</span></div><div class="ov-footer"><span class="ov-badge '+(bull?'ob-bull':'ob-bear')+'">'+(bull?'إيجابي':'سلبي')+'</span><span class="ov-pc">P/C '+d.pcRatio+'</span></div>';grid.appendChild(card);});}
 
@@ -514,10 +550,109 @@ function renderSidebar(ticker){
 }
 
 function getGammaData(d){if(!d.intradayRaw||d.intradayRaw==='—'||d.intradayRaw.length<5)return[];return d.intradayRaw.split(',').map(p=>{const s=p.split(':');return{strike:parseFloat(s[0]),gex:parseFloat(s[1])};}).filter(p=>p.strike&&!isNaN(p.gex));}
-function renderPressureCard(){const t=document.getElementById('sel-pressure').value;const d=allData.find(x=>x.ticker===t);const el=document.getElementById('ind-pressure-content');if(!d){el.innerHTML='';return;}const pairs=getGammaData(d);if(!pairs.length){el.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:10px">لا توجد بيانات Intraday</div>';return;}const callSum=pairs.filter(v=>v.gex>0).reduce((a,b)=>a+b.gex,0);const putSum=Math.abs(pairs.filter(v=>v.gex<0).reduce((a,b)=>a+b.gex,0));const total=callSum+putSum;if(!total){el.innerHTML='';return;}const cp=Math.round((callSum/total)*100);const pp=100-cp;const bull=cp>pp;el.innerHTML='<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px"><span style="color:#00CC44">Call '+cp+'%</span><span style="color:'+(bull?'#00CC44':'#FF4444')+'">'+(bull?'🟢 ضغط شراء':'🔴 ضغط بيع')+'</span><span style="color:#FF4444">Put '+pp+'%</span></div><div class="pressure-bar"><div style="width:'+cp+'%;height:100%;background:#00CC44"></div><div style="flex:1;background:#FF4444"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><div class="stat-box" style="padding:8px;text-align:center"><div style="font-size:9px;color:#555;margin-bottom:3px">Call GEX</div><div style="font-size:14px;font-weight:700;color:#00CC44">'+Math.round(callSum/1000000*10)/10+'M</div></div><div class="stat-box" style="padding:8px;text-align:center"><div style="font-size:9px;color:#555;margin-bottom:3px">Put GEX</div><div style="font-size:14px;font-weight:700;color:#FF4444">-'+Math.round(putSum/1000000*10)/10+'M</div></div></div>';}
-function renderDeltaCard(){const t=document.getElementById('sel-delta').value;const d=allData.find(x=>x.ticker===t);const el=document.getElementById('ind-delta-content');if(!d){el.innerHTML='';return;}const net=d.dCall+d.dPut;const maxVal=Math.max(Math.abs(d.dCall),Math.abs(d.dPut),0.01);const pct=Math.min(48,(Math.abs(net)/maxVal)*48);const col=net>=0?'#00CC44':'#FF4444';const dir=net>=0?'right':'left';el.innerHTML='<div class="delta-bar"><div class="delta-center"></div><div class="delta-fill" style="width:'+pct+'%;'+dir+':50%;background:'+col+'"></div></div><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:10px"><span style="color:#00CC44">Call '+d.dCall+'M$</span><span style="color:'+col+';font-weight:600">Net '+(net>=0?'+':'')+net.toFixed(1)+'M$</span><span style="color:#FF4444">Put '+d.dPut+'M$</span></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px"><div class="stat-box" style="padding:8px;text-align:center"><div style="font-size:9px;color:#555;margin-bottom:2px">Theta</div><div style="font-size:12px;font-weight:600;color:#FFA500">'+d.theta+'M$</div></div><div class="stat-box" style="padding:8px;text-align:center"><div style="font-size:9px;color:#555;margin-bottom:2px">Vega</div><div style="font-size:12px;font-weight:600;color:#9B59B6">'+d.vega+'M$</div></div><div class="stat-box" style="padding:8px;text-align:center"><div style="font-size:9px;color:#555;margin-bottom:2px">OI Total</div><div style="font-size:12px;font-weight:600">'+(Math.round((d.oiCall+d.oiPut)/1000))+'K</div></div></div>';}
-function renderPCCard(){const t=document.getElementById('sel-pc').value;const d=allData.find(x=>x.ticker===t);const el=document.getElementById('ind-pc-content');if(!d){el.innerHTML='';return;}const pc=d.pcRatio;let tag,cls,hint;if(pc>=1.2){tag='تحوط مرتفع';cls='pc-bear';hint='إشارة عكسية صعودية محتملة';}else if(pc<=0.7){tag='مضاربة مفرطة';cls='pc-bull';hint='تحذير — استنزاف الشراء';}else{tag='متوازن';cls='pc-neu';hint='السوق في حالة طبيعية';}const col=pc>=1.2?'#FF4444':pc<=0.7?'#00CC44':'#FFA500';el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="pc-big" style="color:'+col+'">'+pc+'</span><div style="text-align:right"><div><span class="pc-tag '+cls+'">'+tag+'</span></div><div style="font-size:10px;color:#444;margin-top:4px">'+hint+'</div></div></div><div style="height:6px;background:#1a1a1a;border-radius:3px;overflow:hidden;margin-bottom:4px"><div style="height:100%;width:'+Math.min(100,pc/2*100)+'%;background:'+col+';border-radius:3px;transition:width .4s"></div></div><div style="display:flex;justify-content:space-between;font-size:9px;color:#333"><span>0.7</span><span>1.0</span><span>1.2</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px"><div class="stat-box" style="padding:8px;text-align:center"><div style="font-size:9px;color:#555;margin-bottom:2px">OI Call</div><div style="font-size:12px;font-weight:600;color:#00CC44">'+Number(d.oiCall).toLocaleString()+'</div></div><div class="stat-box" style="padding:8px;text-align:center"><div style="font-size:9px;color:#555;margin-bottom:2px">OI Put</div><div style="font-size:12px;font-weight:600;color:#FF4444">'+Number(d.oiPut).toLocaleString()+'</div></div></div>';}
-function renderAllIndicators(){renderGammaCard();renderPressureCard();renderDeltaCard();renderPCCard();}
+function renderPressureCard(){
+  var master=document.getElementById('sel-ind-master');
+  var t=master?master.value:'';
+  var d=allData.find(function(x){return x.ticker===t;});
+  var el=document.getElementById('ind-pressure-content');
+  if(!d||!el){if(el)el.innerHTML='';return;}
+  var pairs=getGammaData(d);
+  if(!pairs.length){el.innerHTML='<div style="color:#555;font-size:10px;text-align:center;padding:8px">لا توجد بيانات</div>';return;}
+  var callSum=pairs.filter(function(v){return v.gex>0;}).reduce(function(a,b){return a+b.gex;},0);
+  var putSum=Math.abs(pairs.filter(function(v){return v.gex<0;}).reduce(function(a,b){return a+b.gex;},0));
+  var total=callSum+putSum;if(!total){el.innerHTML='';return;}
+  var cp=Math.round((callSum/total)*100);var pp=100-cp;var bull=cp>pp;
+  el.innerHTML='<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px"><span style="color:#00CC44">Call '+cp+'%</span><span style="color:'+(bull?'#00CC44':'#FF4444')+';font-size:10px">'+(bull?'🟢 شراء':'🔴 بيع')+'</span><span style="color:#FF4444">Put '+pp+'%</span></div>'
+    +'<div class="pressure-bar"><div style="width:'+cp+'%;height:100%;background:#00CC44"></div><div style="flex:1;background:#FF4444"></div></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px">'
+    +'<div class="stat-box" style="padding:6px;text-align:center"><div style="font-size:9px;color:#555;margin-bottom:2px">Call GEX</div><div style="font-size:12px;font-weight:700;color:#00CC44">'+Math.round(callSum/1000000*10)/10+'M</div></div>'
+    +'<div class="stat-box" style="padding:6px;text-align:center"><div style="font-size:9px;color:#555;margin-bottom:2px">Put GEX</div><div style="font-size:12px;font-weight:700;color:#FF4444">-'+Math.round(putSum/1000000*10)/10+'M</div></div>'
+    +'</div>';
+}
+
+function renderDeltaCard(){
+  var master=document.getElementById('sel-ind-master');
+  var t=master?master.value:'';
+  var d=allData.find(function(x){return x.ticker===t;});
+  var el=document.getElementById('ind-delta-content');
+  if(!d||!el){if(el)el.innerHTML='';return;}
+  var net=d.dCall+d.dPut;
+  var maxVal=Math.max(Math.abs(d.dCall),Math.abs(d.dPut),0.01);
+  var pct=Math.min(48,(Math.abs(net)/maxVal)*48);
+  var col=net>=0?'#00CC44':'#FF4444';
+  var dir=net>=0?'right':'left';
+  el.innerHTML='<div class="delta-bar"><div class="delta-center"></div><div class="delta-fill" style="width:'+pct+'%;'+dir+':50%;background:'+col+'"></div></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:6px">'
+    +'<span style="color:#00CC44">'+d.dCall+'M$</span>'
+    +'<span style="color:'+col+';font-weight:600">Net '+(net>=0?'+':'')+net.toFixed(1)+'M$</span>'
+    +'<span style="color:#FF4444">'+d.dPut+'M$</span></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">'
+    +'<div class="stat-box" style="padding:6px;text-align:center"><div style="font-size:9px;color:#555;margin-bottom:2px">Theta</div><div style="font-size:11px;font-weight:600;color:#FFA500">'+d.theta+'M$</div></div>'
+    +'<div class="stat-box" style="padding:6px;text-align:center"><div style="font-size:9px;color:#555;margin-bottom:2px">Vega</div><div style="font-size:11px;font-weight:600;color:#9B59B6">'+d.vega+'M$</div></div>'
+    +'</div>';
+}
+
+function renderPCCard(){
+  var master=document.getElementById('sel-ind-master');
+  var t=master?master.value:'';
+  var d=allData.find(function(x){return x.ticker===t;});
+  var el=document.getElementById('ind-pc-content');
+  if(!d||!el){if(el)el.innerHTML='';return;}
+  var pc=d.pcRatio;
+  var tag,cls,col;
+  if(pc>=1.2){tag='تحوط مرتفع';cls='pc-bear';col='#FF4444';}
+  else if(pc<=0.7){tag='مضاربة مفرطة';cls='pc-bull';col='#00CC44';}
+  else{tag='متوازن';cls='pc-neu';col='#FFA500';}
+  el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+    +'<span class="pc-big" style="color:'+col+'">'+pc+'</span>'
+    +'<span class="pc-tag '+cls+'">'+tag+'</span></div>'
+    +'<div style="height:5px;background:#1a1a1a;border-radius:3px;overflow:hidden;margin-bottom:4px">'
+    +'<div style="height:100%;width:'+Math.min(100,pc/2*100)+'%;background:'+col+';border-radius:3px"></div></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:9px;color:#333;margin-bottom:6px"><span>0.7</span><span>1.0</span><span>1.2</span></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">'
+    +'<div class="stat-box" style="padding:6px;text-align:center"><div style="font-size:9px;color:#555;margin-bottom:2px">OI Call</div><div style="font-size:11px;font-weight:600;color:#00CC44">'+Number(d.oiCall).toLocaleString()+'</div></div>'
+    +'<div class="stat-box" style="padding:6px;text-align:center"><div style="font-size:9px;color:#555;margin-bottom:2px">OI Put</div><div style="font-size:11px;font-weight:600;color:#FF4444">'+Number(d.oiPut).toLocaleString()+'</div></div>'
+    +'</div>';
+}
+
+function renderStatsCard(){
+  var master=document.getElementById('sel-ind-master');
+  var t=master?master.value:'';
+  var d=allData.find(function(x){return x.ticker===t;});
+  var el=document.getElementById('ind-stats-content');
+  if(!d||!el){if(el)el.innerHTML='';return;}
+  var bull=d.spot>=d.zeroGamma;
+  el.innerHTML='<div class="stat-box">'
+    +'<div class="stat-row"><span class="sl">Call Wall</span><span class="sv vc-cw">'+d.callWall+'</span></div>'
+    +'<div class="stat-row"><span class="sl">Put Wall</span><span class="sv vc-pw">'+d.putWall+'</span></div>'
+    +'<div class="stat-row"><span class="sl">Zero Gamma</span><span class="sv vc-zg">'+d.zeroGamma+'</span></div>'
+    +'<div class="stat-row"><span class="sl">HVL</span><span class="sv vc-hvl">'+d.topGamma+'</span></div>'
+    +'<div class="stat-row"><span class="sl">الموضع</span><span class="sv" style="color:'+(bull?'#00CC44':'#FF4444')+'">'+(bull?'فوق ZG':'تحت ZG')+'</span></div>'
+    +'<div class="stat-row"><span class="sl">OI Total</span><span class="sv">'+Math.round((d.oiCall+d.oiPut)/1000)+'K</span></div>'
+    +'</div>';
+}
+function onMasterSelect(ticker){
+  // تحديث كل الـ selects للتوافقية
+  ['sel-gamma','sel-pressure','sel-delta','sel-pc'].forEach(function(id){
+    var sel=document.getElementById(id);
+    if(sel)sel.value=ticker;
+  });
+  renderAllIndicators();
+}
+
+function renderAllIndicators(){
+  var master=document.getElementById('sel-ind-master');
+  var ticker=master?master.value:(allData[0]?.ticker||'');
+  var d=allData.find(function(x){return x.ticker===ticker;});
+  // تحديث السعر
+  var badge=document.getElementById('ind-spot-badge');
+  if(badge&&d) badge.textContent=d.spot.toLocaleString();
+  renderGammaCard();
+  renderPressureCard();
+  renderDeltaCard();
+  renderPCCard();
+  renderStatsCard();
+}
 
 // ══════════════════════════════════════
 //   بحث التيكر
@@ -542,34 +677,86 @@ function hideSearch(){document.getElementById('search-drop').style.display='none
 //   Gamma Profile المطور
 // ══════════════════════════════════════
 function renderGammaCard(){
-  const t=document.getElementById('sel-gamma').value;
-  const d=allData.find(x=>x.ticker===t);
-  const el=document.getElementById('ind-gamma-content');
-  if(!d){el.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:20px">لا توجد بيانات</div>';return;}
-  const pairs=getGammaData(d);
-  if(!pairs.length){el.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:20px">لا توجد بيانات Intraday</div>';return;}
-  const sorted=[...pairs].sort((a,b)=>a.strike-b.strike);
-  const maxAbs=Math.max(...sorted.map(p=>Math.abs(p.gex)));
-  const chartH=130;
-  let html='<div style="font-size:10px;color:#555;margin-bottom:6px">السعر: <span style="color:#4da6ff;font-weight:600">'+d.spot+'</span></div>';
-  html+='<div style="display:flex;align-items:stretch;gap:1px;overflow-x:auto;padding-bottom:24px;min-height:'+(chartH*2+2)+'px">';
-  sorted.forEach(function(p){
+  var master=document.getElementById('sel-ind-master');
+  var sel=document.getElementById('sel-gamma');
+  var t=(master&&master.value)?master.value:(sel?sel.value:'');
+  var d=allData.find(function(x){return x.ticker===t;});
+  var el=document.getElementById('ind-gamma-content');
+  if(!d||!el){if(el)el.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:20px">لا توجد بيانات</div>';return;}
+
+  // استخدام فقط GEX Levels الرئيسية (gl1-gl7) — لا intraday
+  var levels=[];
+  var spot=d.spot;
+  var glArr=[
+    {p:d.gl1,v:1},{p:d.gl2,v:2},{p:d.gl3,v:3},{p:d.gl4,v:4},
+    {p:d.gl5,v:5},{p:d.gl6,v:6},{p:d.gl7,v:7}
+  ].filter(function(x){return x.p>0;});
+
+  // إذا كان عنده intraday نستخدمه لقيم القوة
+  var intraMap={};
+  if(d.intradayRaw&&d.intradayRaw!=='—'&&d.intradayRaw.length>5){
+    d.intradayRaw.split(',').forEach(function(pair){
+      var pts=pair.split(':');
+      if(pts.length===2){
+        var strike=parseFloat(pts[0]);
+        var gex=parseFloat(pts[1]);
+        if(strike&&!isNaN(gex)) intraMap[strike]=gex;
+      }
+    });
+  }
+
+  // بناء مستويات الرسم
+  glArr.forEach(function(g){
+    var gex=intraMap[g.p]||g.v;
+    levels.push({price:g.p,gex:gex});
+  });
+
+  if(!levels.length){el.innerHTML='<div style="color:#555;font-size:11px;text-align:center;padding:20px">لا توجد بيانات</div>';return;}
+
+  // ترتيب حسب السعر
+  levels.sort(function(a,b){return a.price-b.price;});
+
+  // إيجاد مستوى أقرب للسعر الحالي — للتمركز
+  var closestIdx=0;
+  var minDist=Infinity;
+  levels.forEach(function(l,i){
+    var dist=Math.abs(l.price-spot);
+    if(dist<minDist){minDist=dist;closestIdx=i;}
+  });
+
+  var maxAbs=Math.max.apply(null,levels.map(function(p){return Math.abs(p.gex);}));
+  var chartH=110;
+  var barW=Math.max(28,Math.floor((window.innerWidth-40)/Math.max(levels.length,1)));
+  barW=Math.min(barW,52);
+
+  var html='<div style="display:flex;align-items:stretch;gap:2px;overflow-x:auto;padding-bottom:20px;min-height:'+(chartH*2+24)+'px;justify-content:center">';
+  levels.forEach(function(p,i){
     var pct=Math.min(1,Math.abs(p.gex)/maxAbs);
-    var barH=Math.max(2,Math.round(pct*chartH));
-    var isSpot=Math.abs(p.strike-d.spot)<(d.callWall-d.putWall)*0.025;
+    var barH=Math.max(3,Math.round(pct*chartH));
+    var isSpot=i===closestIdx;
     var col=isSpot?'#4da6ff':p.gex>=0?'#00CC44':'#FF4444';
-    var lbl=p.strike>=1000?Math.round(p.strike)+'':String(p.strike);
-    var upBar=p.gex>=0?'<div style="height:'+barH+'px;width:14px;background:'+col+';border-radius:2px 2px 0 0"></div>':'<div style="width:14px"></div>';
-    var dnBar=p.gex<0?'<div style="height:'+barH+'px;width:14px;background:'+col+';border-radius:0 0 2px 2px"></div>':'<div style="width:14px"></div>';
-    html+='<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:20px">'
+    var lbl=p.price>=1000?String(Math.round(p.price)):String(p.price);
+    var upBar=p.gex>=0?'<div style="height:'+barH+'px;width:'+(barW-4)+'px;background:'+col+';border-radius:2px 2px 0 0"></div>':'<div style="width:'+(barW-4)+'px"></div>';
+    var dnBar=p.gex<0?'<div style="height:'+barH+'px;width:'+(barW-4)+'px;background:'+col+';border-radius:0 0 2px 2px"></div>':'<div style="width:'+(barW-4)+'px"></div>';
+    html+='<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:'+barW+'px">'
       +'<div style="height:'+chartH+'px;display:flex;align-items:flex-end">'+upBar+'</div>'
-      +'<div style="height:1px;width:20px;background:#2a2a2a"></div>'
+      +'<div style="height:2px;width:'+barW+'px;background:'+(isSpot?'#4da6ff':'#2a2a2a')+'"></div>'
       +'<div style="height:'+chartH+'px;display:flex;align-items:flex-start">'+dnBar+'</div>'
-      +'<div style="font-size:7px;color:'+(isSpot?'#4da6ff':'#333')+';transform:rotate(-45deg);margin-top:2px;width:20px;text-align:center">'+lbl+'</div>'
+      +'<div style="font-size:9px;color:'+(isSpot?'#4da6ff':'#444')+';margin-top:4px;text-align:center;font-weight:'+(isSpot?'700':'400')+'">'+lbl+'</div>'
       +'</div>';
   });
-  html+='</div><div style="display:flex;gap:12px;font-size:10px;margin-top:4px"><span style="color:#00CC44">▲ Call GEX</span><span style="color:#FF4444">▼ Put GEX</span><span style="color:#4da6ff">◉ السعر</span></div>';
+  html+='</div>';
   el.innerHTML=html;
+
+  // تمرير للسعر الحالي بعد الرسم
+  setTimeout(function(){
+    if(!el)return;
+    var container=el.querySelector('div');
+    if(container){
+      var centerX=closestIdx*barW-container.parentElement.clientWidth/2+barW/2;
+      container.scrollLeft=Math.max(0,centerX);
+    }
+  },50);
 }
 
 // ══════════════════════════════════════
